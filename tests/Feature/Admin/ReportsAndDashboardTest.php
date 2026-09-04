@@ -1,0 +1,121 @@
+<?php
+
+namespace Tests\Feature\Admin;
+
+use App\Models\Client;
+use App\Models\Equipment;
+use App\Models\Installation;
+use App\Models\Invoice;
+use App\Models\Offer;
+use App\Models\Ticket;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ReportsAndDashboardTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $adminUser;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->adminUser = User::factory()->create();
+        $this->adminUser->assignRole('admin');
+    }
+
+    public function test_reports_page_loads(): void
+    {
+        $this->actingAs($this->adminUser)
+            ->get(route('admin.reports'))
+            ->assertOk();
+    }
+
+    public function test_sms_logs_page_loads(): void
+    {
+        $this->actingAs($this->adminUser)
+            ->get(route('admin.sms-logs'))
+            ->assertOk();
+    }
+
+    public function test_dashboard_shows_low_stock_alert(): void
+    {
+        Equipment::factory()->create(['stock_quantity' => 1]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Dashboard')
+            ->has('alerts', 1)
+        );
+    }
+
+    public function test_dashboard_shows_overdue_invoice_alert(): void
+    {
+        Invoice::factory()->create(['status' => 'unpaid', 'due_at' => now()->subDays(3)]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Dashboard')
+            ->has('alerts', 1)
+        );
+    }
+
+    public function test_dashboard_has_no_alerts_when_everything_is_healthy(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Dashboard')
+            ->has('alerts', 0)
+        );
+    }
+
+    public function test_dashboard_surfaces_actionable_items_from_every_module(): void
+    {
+        $client = Client::factory()->create(['status' => 'lead']);
+        $offer = Offer::factory()->create(['client_id' => $client->id, 'status' => 'draft']);
+        Installation::factory()->create(['client_id' => $client->id, 'status' => 'scheduled']);
+        Ticket::factory()->create(['client_id' => $client->id, 'status' => 'open']);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Dashboard')
+            ->has('recentLeads', 1)
+            ->has('pendingOffers', 1)
+            ->has('activeInstallations', 1)
+            ->has('openTickets', 1)
+            ->where('pendingOffers.0.id', $offer->id)
+        );
+    }
+
+    public function test_admin_can_accept_a_pending_offer_directly_from_the_dashboard(): void
+    {
+        $client = Client::factory()->create();
+        $offer = Offer::factory()->create(['client_id' => $client->id, 'status' => 'sent']);
+
+        $this->actingAs($this->adminUser)
+            ->patch(route('sales.offers.status', $offer), ['status' => 'accepted'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('offers', ['id' => $offer->id, 'status' => 'accepted']);
+        $this->assertDatabaseHas('installations', ['offer_id' => $offer->id]);
+    }
+
+    public function test_admin_can_resolve_a_ticket_directly_from_the_dashboard(): void
+    {
+        $ticket = Ticket::factory()->create(['status' => 'open']);
+
+        $this->actingAs($this->adminUser)
+            ->patch(route('technical.tickets.status', $ticket), ['status' => 'resolved'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'status' => 'resolved']);
+    }
+}

@@ -1,0 +1,121 @@
+<?php
+
+namespace Tests\Feature\Sales;
+
+use App\Models\Client;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ClientCrudTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $salesUser;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->salesUser = User::factory()->create();
+        $this->salesUser->assignRole('vanzari');
+    }
+
+    public function test_guest_cannot_access_sales_module(): void
+    {
+        $this->get(route('sales.clients.index'))->assertRedirect(route('login'));
+    }
+
+    public function test_technician_cannot_access_sales_module(): void
+    {
+        $tech = User::factory()->create();
+        $tech->assignRole('tehnic');
+
+        $this->actingAs($tech)->get(route('sales.clients.index'))->assertForbidden();
+    }
+
+    public function test_sales_user_can_list_clients(): void
+    {
+        Client::factory()->count(3)->create();
+
+        $this->actingAs($this->salesUser)
+            ->get(route('sales.clients.index'))
+            ->assertOk();
+    }
+
+    public function test_sales_user_can_create_a_client(): void
+    {
+        $response = $this->actingAs($this->salesUser)->post(route('sales.clients.store'), [
+            'name' => 'Andrei Popescu',
+            'phone' => '0722000000',
+            'email' => 'andrei@example.com',
+            'source' => 'manual',
+            'status' => 'lead',
+        ]);
+
+        $client = Client::firstWhere('email', 'andrei@example.com');
+        $response->assertRedirect(route('sales.clients.show', $client));
+
+        $this->assertDatabaseHas('clients', [
+            'name' => 'Andrei Popescu',
+            'phone' => '0722000000',
+        ]);
+    }
+
+    public function test_client_creation_requires_name(): void
+    {
+        $this->actingAs($this->salesUser)
+            ->post(route('sales.clients.store'), ['source' => 'manual', 'status' => 'lead'])
+            ->assertSessionHasErrors('name');
+    }
+
+    public function test_sales_user_can_update_a_client(): void
+    {
+        $client = Client::factory()->create(['status' => 'lead']);
+
+        $this->actingAs($this->salesUser)->put(route('sales.clients.update', $client), [
+            'name' => $client->name,
+            'source' => $client->source,
+            'status' => 'client',
+        ])->assertRedirect(route('sales.clients.show', $client));
+
+        $this->assertDatabaseHas('clients', ['id' => $client->id, 'status' => 'client']);
+    }
+
+    public function test_sales_user_can_delete_a_client(): void
+    {
+        $client = Client::factory()->create();
+
+        $this->actingAs($this->salesUser)
+            ->delete(route('sales.clients.destroy', $client))
+            ->assertRedirect(route('sales.clients.index'));
+
+        $this->assertDatabaseMissing('clients', ['id' => $client->id]);
+    }
+
+    public function test_client_list_can_be_searched_by_name(): void
+    {
+        Client::factory()->create(['name' => 'Maria Ionescu']);
+        Client::factory()->create(['name' => 'George Vasile']);
+
+        $response = $this->actingAs($this->salesUser)
+            ->get(route('sales.clients.index', ['search' => 'Maria']));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Sales/Clients/Index')
+            ->has('clients.data', 1)
+        );
+    }
+
+    public function test_clients_export_downloads_a_file(): void
+    {
+        Client::factory()->count(2)->create();
+
+        $this->actingAs($this->salesUser)
+            ->get(route('sales.clients.export'))
+            ->assertOk();
+    }
+}

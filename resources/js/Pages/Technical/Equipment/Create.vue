@@ -1,0 +1,78 @@
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+
+const form = useForm({
+    name: '',
+    category: 'camera',
+    sku: '',
+    unit: 'buc',
+    unit_price: 0,
+    stock_quantity: 0,
+    description: '',
+});
+
+function submit() {
+    form.post(route('technical.equipment.store'));
+}
+</script>
+
+<template>
+    <Head title="Echipament nou" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-xl font-semibold leading-tight text-gray-800">Echipament nou</h2>
+        </template>
+
+        <div class="py-8">
+            <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
+                <form class="space-y-6 rounded-lg bg-white p-6 shadow-sm" @submit.prevent="submit">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700">Nume *</label>
+                            <input v-model="form.name" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Categorie</label>
+                            <select v-model="form.category" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <option value="camera">Camera</option>
+                                <option value="dvr">DVR</option>
+                                <option value="nvr">NVR</option>
+                                <option value="cable">Cablu</option>
+                                <option value="accessory">Accesoriu</option>
+                                <option value="other">Altele</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">SKU</label>
+                            <input v-model="form.sku" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Unitate</label>
+                            <input v-model="form.unit" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Pret unitar (lei)</label>
+                            <input v-model.number="form.unit_price" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Stoc initial</label>
+                            <input v-model.number="form.stock_quantity" type="number" min="0" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700">Descriere</label>
+                            <textarea v-model="form.description" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
+                            Salveaza echipament
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>
