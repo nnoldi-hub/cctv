@@ -42,4 +42,11 @@ return [
         'sender' => env('SMS_SENDER', 'CCTV'),
     ],
 
+    'fgo' => [
+        'enabled' => env('FGO_ENABLED', false),
+        'base_url' => env('FGO_BASE_URL'),
+        'token' => env('FGO_TOKEN'),
+        'company_id' => env('FGO_COMPANY_ID'),
+    ],
+
 ];

@@ -6,6 +6,7 @@ import { Link } from '@inertiajs/vue3';
 
 defineProps({
     packages: Array,
+    page: Object,
 });
 
 const services = [

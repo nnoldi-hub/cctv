@@ -1,24 +1,31 @@
 <script setup>
 import SeoHead from '@/Components/SeoHead.vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
+import { computed } from 'vue';
+const props = defineProps({ page: Object });
+const pageTitle = computed(() => props.page?.title || 'Despre noi');
+const pageSubtitle = computed(() => props.page?.subtitle || 'Echipa si valorile noastre');
+const bodyHtml = computed(() => props.page?.content?.body_html || '');
 </script>
 
 <template>
     <SeoHead
-        title="Despre noi"
+        :title="pageTitle"
         description="Firma specializata in proiectare, instalare si mentenanta de sisteme CCTV pentru rezidential si comercial, cu peste 10 ani de experienta."
     />
 
     <PublicLayout>
         <section class="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-            <h1 class="font-display text-3xl font-bold text-slate-900">Despre noi</h1>
-            <p class="mt-6 text-slate-600">
+            <h1 class="font-display text-3xl font-bold text-slate-900">{{ pageTitle }}</h1>
+            <p class="mt-2 text-slate-500">{{ pageSubtitle }}</p>
+            <div v-if="bodyHtml" class="prose mt-6 max-w-none text-slate-600" v-html="bodyHtml"></div>
+            <p v-else class="mt-6 text-slate-600">
                 Suntem o echipa de tehnicieni si consultanti specializati in sisteme de
                 supraveghere video, cu peste 10 ani de experienta in proiecte rezidentiale
                 si comerciale. Am instalat peste 500 de sisteme CCTV, de la locuinte
                 individuale la spatii comerciale si industriale.
             </p>
-            <p class="mt-4 text-slate-600">
+            <p v-if="!bodyHtml" class="mt-4 text-slate-600">
                 Misiunea noastra este sa oferim solutii de securitate accesibile si
                 fiabile, adaptate fiecarui client in parte. Lucram doar cu echipamente
                 verificate si oferim garantie extinsa pentru toate instalatiile noastre.

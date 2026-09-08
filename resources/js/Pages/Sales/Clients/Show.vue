@@ -1,10 +1,15 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     client: Object,
+    summary: Object,
 });
+const page = usePage();
+const roles = page.props.auth.roles ?? [];
+const canAdmin = roles.includes('admin');
+const canTechnical = roles.includes('admin') || roles.includes('tehnic') || roles.includes('suport');
 
 const statusLabels = { lead: 'Lead', client: 'Client', inactive: 'Inactiv' };
 const statusClasses = {
@@ -19,6 +24,13 @@ const offerStatusClasses = {
     accepted: 'bg-green-100 text-green-800',
     rejected: 'bg-red-100 text-red-700',
     expired: 'bg-slate-100 text-slate-500',
+};
+
+const ticketStatusClasses = {
+    open: 'bg-amber-100 text-amber-800',
+    in_progress: 'bg-blue-100 text-blue-700',
+    resolved: 'bg-green-100 text-green-800',
+    closed: 'bg-slate-100 text-slate-600',
 };
 
 function money(value) {
@@ -78,6 +90,13 @@ function money(value) {
                             </dd>
                         </div>
                         <div>
+                            <dt class="text-slate-400">Portal client</dt>
+                            <dd v-if="client.user" class="text-slate-900">
+                                {{ client.user.name }} <span class="text-xs text-slate-500">({{ client.user.email }})</span>
+                            </dd>
+                            <dd v-else class="text-slate-400">Neasociat</dd>
+                        </div>
+                        <div>
                             <dt class="text-slate-400">Asignat</dt>
                             <dd class="text-slate-900">{{ client.assigned_to?.name ?? '-' }}</dd>
                         </div>
@@ -89,6 +108,25 @@ function money(value) {
                 </div>
 
                 <div class="space-y-6 lg:col-span-2">
+                    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        <div class="rounded-lg bg-white p-4 shadow-sm">
+                            <div class="text-xs text-slate-500">Valoare facturata</div>
+                            <div class="mt-1 text-lg font-semibold text-slate-900">{{ money(summary.invoiceTotal) }} lei</div>
+                        </div>
+                        <div class="rounded-lg bg-white p-4 shadow-sm">
+                            <div class="text-xs text-slate-500">Activitati in asteptare</div>
+                            <div class="mt-1 text-lg font-semibold text-slate-900">{{ summary.pendingActivities }}</div>
+                        </div>
+                        <div class="rounded-lg bg-white p-4 shadow-sm">
+                            <div class="text-xs text-slate-500">Tichete deschise</div>
+                            <div class="mt-1 text-lg font-semibold text-slate-900">{{ summary.openTickets }}</div>
+                        </div>
+                        <div class="rounded-lg bg-white p-4 shadow-sm">
+                            <div class="text-xs text-slate-500">Abonamente active</div>
+                            <div class="mt-1 text-lg font-semibold text-slate-900">{{ summary.activeSubscriptions }}</div>
+                        </div>
+                    </div>
+
                     <div class="rounded-lg bg-white p-6 shadow-sm">
                         <h3 class="text-sm font-semibold text-slate-500">Oferte ({{ client.offers.length }})</h3>
                         <div v-if="client.offers.length" class="mt-4 divide-y divide-slate-100">
@@ -111,6 +149,42 @@ function money(value) {
                             </Link>
                         </div>
                         <p v-else class="mt-4 text-sm text-slate-400">Nicio oferta pentru acest client inca.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-500">Activitati ({{ client.activities.length }})</h3>
+                            <Link :href="route('sales.activities.create', { client_id: client.id })" class="text-sm font-medium text-blue-600 hover:text-blue-500">Adauga</Link>
+                        </div>
+                        <div v-if="client.activities.length" class="mt-4 divide-y divide-slate-100">
+                            <div v-for="activity in client.activities" :key="activity.id" class="flex items-center justify-between py-3">
+                                <div><div class="font-medium text-slate-900">{{ activity.title }}</div><div class="text-xs text-slate-400">{{ activity.due_at ? new Date(activity.due_at).toLocaleString('ro-RO') : 'Fara termen' }} · {{ activity.assigned_to?.name ?? 'Neasignat' }}</div></div>
+                                <span class="rounded-full px-2 py-1 text-xs font-medium" :class="activity.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'">{{ activity.status === 'completed' ? 'Finalizata' : 'In asteptare' }}</span>
+                            </div>
+                        </div>
+                        <p v-else class="mt-4 text-sm text-slate-400">Nicio activitate pentru acest client.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-500">Abonamente ({{ client.subscriptions.length }})</h3>
+                            <Link v-if="canAdmin" :href="route('admin.subscriptions.create', { client_id: client.id })" class="text-sm font-medium text-blue-600 hover:text-blue-500">Adauga</Link>
+                        </div>
+                        <div v-if="client.subscriptions.length" class="mt-4 divide-y divide-slate-100">
+                            <div v-for="subscription in client.subscriptions" :key="subscription.id" class="flex items-center justify-between py-3"><div><div class="font-medium text-slate-900">{{ subscription.plan }}</div><div class="text-xs text-slate-400">{{ money(subscription.price) }} lei / {{ subscription.billing_cycle === 'yearly' ? 'an' : 'luna' }}</div></div><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium capitalize text-slate-600">{{ subscription.status }}</span></div>
+                        </div>
+                        <p v-else class="mt-4 text-sm text-slate-400">Niciun abonament pentru acest client.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-500">Tichete suport ({{ client.tickets.length }})</h3>
+                            <Link v-if="canTechnical" :href="route('technical.tickets.create', { client_id: client.id })" class="text-sm font-medium text-blue-600 hover:text-blue-500">Tichet nou</Link>
+                        </div>
+                        <div v-if="client.tickets.length" class="mt-4 divide-y divide-slate-100">
+                            <Link v-for="ticket in client.tickets" :key="ticket.id" :href="route('technical.tickets.show', ticket.id)" class="flex items-center justify-between py-3 hover:bg-slate-50"><div><div class="font-medium text-slate-900">{{ ticket.subject }}</div><div class="text-xs text-slate-400">Asignat: {{ ticket.assigned_to?.name ?? '-' }}</div></div><span class="rounded-full px-2 py-1 text-xs font-medium" :class="ticketStatusClasses[ticket.status]">{{ ticket.status.replace('_', ' ') }}</span></Link>
+                        </div>
+                        <p v-else class="mt-4 text-sm text-slate-400">Niciun tichet pentru acest client.</p>
                     </div>
 
                     <div class="rounded-lg bg-white p-6 shadow-sm">

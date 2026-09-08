@@ -13,6 +13,7 @@ class Client extends Model
 
     protected $fillable = [
         'name',
+        'user_id',
         'company_name',
         'email',
         'phone',
@@ -21,6 +22,8 @@ class Client extends Model
         'county',
         'source',
         'status',
+        'pipeline_stage',
+        'lost_reason',
         'assigned_to',
         'notes',
     ];
@@ -28,6 +31,11 @@ class Client extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function offers(): HasMany
@@ -53,5 +61,10 @@ class Client extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Activity::class);
     }
 }

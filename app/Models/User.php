@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'phone', 'password'])]
@@ -29,5 +30,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function clientProfile(): HasOne
+    {
+        return $this->hasOne(Client::class);
     }
 }

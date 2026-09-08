@@ -20,6 +20,7 @@ const sections = [
             { name: 'Lead-uri', route: 'sales.clients.index', query: { status: 'lead' } },
             { name: 'Oferte', route: 'sales.offers.index' },
             { name: 'Oferte acceptate', route: 'sales.offers.index', query: { status: 'accepted' } },
+            { name: 'Activitati', route: 'sales.activities.index' },
         ],
     },
     {
@@ -45,8 +46,12 @@ const sections = [
             { name: 'Abonamente', route: 'admin.subscriptions.index', icon: 'credit-card' },
             { name: 'KPI / Rapoarte', route: 'admin.reports', icon: 'bar-chart' },
             { name: 'Log SMS', route: 'admin.sms-logs', icon: 'message-square' },
+            { name: 'Jurnal audit', route: 'admin.audit-logs', icon: 'file-text' },
             { name: 'Setari', route: 'admin.settings.edit', icon: 'settings' },
             { name: 'Pachete site', route: 'admin.site-packages.index', icon: 'package' },
+            { name: 'Pagini publice', route: 'admin.pages.index', icon: 'file-text' },
+            { name: 'Statistici', route: 'admin.stats.index', icon: 'bar-chart' },
+            { name: 'Blog', route: 'admin.blog.index', icon: 'file-text' },
         ],
     },
 ];
@@ -118,10 +123,8 @@ const mobileOpen = ref(false);
         >
             <div class="flex h-16 flex-shrink-0 items-center gap-2 border-b border-white/10 px-4">
                 <Link :href="route('dashboard')" class="flex min-w-0 items-center gap-2">
-                    <ApplicationLogo class="h-8 w-8 flex-shrink-0" />
-                    <span v-if="!collapsed" class="truncate font-display text-base font-bold text-white">
-                        CCTV <span class="text-orange-500">Security</span>
-                    </span>
+                    <img src="/branding/mark-color-512.png" alt="CCTV Security" class="h-8 w-8 flex-shrink-0 object-contain" />
+                    <img v-if="!collapsed" src="/branding/logo-cctv.png" alt="CCTV Security" class="h-6 w-auto max-w-[140px] object-contain" />
                 </Link>
                 <button type="button" class="ml-auto text-slate-400 hover:text-white lg:hidden" @click="mobileOpen = false">
                     <Icon name="close" class="h-5 w-5" />

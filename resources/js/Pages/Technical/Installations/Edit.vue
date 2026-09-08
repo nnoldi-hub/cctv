@@ -21,10 +21,15 @@ const form = useForm({
     scheduled_at: props.installation.scheduled_at ? props.installation.scheduled_at.substring(0, 16) : '',
     status: props.installation.status,
     notes: props.installation.notes,
+    labor_hours: props.installation.labor_hours,
+    materials: (props.installation.materials ?? []).join('\n'),
+    customer_name: props.installation.customer_name ?? '',
+    customer_notes: props.installation.customer_notes ?? '',
+    photos: [],
 });
 
 function submit() {
-    form.put(route('technical.installations.update', props.installation.id));
+    form.transform((data) => ({ ...data, _method: 'put' })).post(route('technical.installations.update', props.installation.id), { forceFormData: true });
 }
 </script>
 

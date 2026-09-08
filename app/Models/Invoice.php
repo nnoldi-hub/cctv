@@ -14,6 +14,10 @@ class Invoice extends Model
         'client_id',
         'offer_id',
         'invoice_number',
+        'fgo_id',
+        'fgo_status',
+        'fgo_synced_at',
+        'fgo_error',
         'amount',
         'status',
         'issued_at',
@@ -26,6 +30,7 @@ class Invoice extends Model
         'issued_at' => 'date',
         'due_at' => 'date',
         'paid_at' => 'date',
+        'fgo_synced_at' => 'datetime',
     ];
 
     public function client(): BelongsTo

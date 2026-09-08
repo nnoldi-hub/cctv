@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\AuditLog;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class ProfileController extends Controller
         }
 
         $request->user()->save();
+        AuditLog::record($request->user(), 'profile.updated', 'Profil actualizat.');
 
         return Redirect::route('profile.edit');
     }
@@ -50,6 +52,7 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        AuditLog::record($user, 'profile.deleted', 'Contul propriu a fost sters.');
 
         Auth::logout();
 

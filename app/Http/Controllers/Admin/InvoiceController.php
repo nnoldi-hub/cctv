@@ -8,10 +8,12 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Offer;
 use App\Models\Setting;
+use App\Services\FgoClient;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use RuntimeException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -105,6 +107,26 @@ class InvoiceController extends Controller
         $invoice->update(['status' => 'paid', 'paid_at' => now()]);
 
         return back()->with('success', 'Factura marcata ca platita.');
+    }
+
+    public function syncFgo(Invoice $invoice, FgoClient $fgo): RedirectResponse
+    {
+        if (! $fgo->isConfigured()) {
+            return back()->with('error', $fgo->configurationMessage());
+        }
+
+        try {
+            $fgo->syncInvoice($invoice);
+        } catch (RuntimeException $exception) {
+            $invoice->update([
+                'fgo_status' => 'error',
+                'fgo_error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('error', $exception->getMessage());
+        }
+
+        return back()->with('success', 'Factura sincronizata cu FGO.');
     }
 
     public function destroy(Invoice $invoice): RedirectResponse

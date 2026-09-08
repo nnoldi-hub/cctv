@@ -6,8 +6,8 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-        <link rel="icon" type="image/svg+xml" href="/branding/icon-badge.svg">
-        <link rel="alternate icon" href="/favicon.ico">
+        <link rel="icon" type="image/png" sizes="192x192" href="/branding/logo-cctv.png?v=2">
+        <link rel="alternate icon" type="image/png" href="/branding/logo-cctv.png?v=2">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

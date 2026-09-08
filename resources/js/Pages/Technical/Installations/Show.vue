@@ -96,6 +96,7 @@ const checklistProgress = computed(() => {
                                     </Link>
                                 </dd>
                             </div>
+
                             <div>
                                 <dt class="text-slate-400">Adresa</dt>
                                 <dd class="text-slate-900">{{ installation.address ?? '-' }}</dd>
@@ -162,6 +163,21 @@ const checklistProgress = computed(() => {
                                 </label>
                             </li>
                         </ul>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <h3 class="text-sm font-semibold text-slate-500">Executie si receptie</h3>
+                        <dl class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+                            <div><dt class="text-slate-400">Ore lucrate</dt><dd class="text-slate-900">{{ installation.labor_hours ?? '-' }}</dd></div>
+                            <div><dt class="text-slate-400">Client la receptie</dt><dd class="text-slate-900">{{ installation.customer_name ?? '-' }}</dd></div>
+                            <div class="sm:col-span-2"><dt class="text-slate-400">Materiale consumate</dt><dd class="whitespace-pre-line text-slate-900">{{ installation.materials?.join('\n') || '-' }}</dd></div>
+                            <div class="sm:col-span-2"><dt class="text-slate-400">Observatii client</dt><dd class="whitespace-pre-line text-slate-900">{{ installation.customer_notes || '-' }}</dd></div>
+                        </dl>
+                        <div v-if="installation.photos?.length" class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            <a v-for="photo in installation.photos" :key="photo" :href="photo" target="_blank" rel="noopener">
+                                <img :src="photo" alt="Fotografie lucrare" class="h-32 w-full rounded-md object-cover" />
+                            </a>
+                        </div>
                     </div>
 
                     <div class="rounded-lg bg-white p-6 shadow-sm">

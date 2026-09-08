@@ -5,8 +5,25 @@ import { reactive, watch } from 'vue';
 
 const props = defineProps({
     clients: Object,
+    pipeline: Array,
     filters: Object,
 });
+import { ref } from 'vue';
+const viewMode = ref('list');
+const stages = [
+    { key: 'new', label: 'Lead nou' },
+    { key: 'contacted', label: 'Contactat' },
+    { key: 'visit', label: 'Vizita' },
+    { key: 'proposal', label: 'Oferta' },
+    { key: 'won', label: 'Castigat' },
+    { key: 'lost', label: 'Pierdut' },
+];
+const stageLabels = Object.fromEntries(stages.map((stage) => [stage.key, stage.label]));
+function stageClients(stage) { return props.pipeline.filter((client) => client.pipeline_stage === stage); }
+function updateStage(client, event) {
+    const data = { pipeline_stage: event.target.value, lost_reason: event.target.value === 'lost' ? client.lost_reason : null };
+    router.patch(route('sales.clients.pipeline', client.id), data, { preserveScroll: true });
+}
 
 const form = reactive({
     search: props.filters.search ?? '',
@@ -56,12 +73,13 @@ function destroy(client) {
                         Client nou
                     </Link>
                 </div>
+
             </div>
         </template>
 
         <div class="py-8">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div class="mb-4 flex flex-wrap items-center gap-3">
                     <input
                         v-model="form.search"
                         type="text"
@@ -81,9 +99,13 @@ function destroy(client) {
                         <option value="referral">Recomandare</option>
                         <option value="manual">Manual</option>
                     </select>
+                    <div class="ml-auto flex rounded-md border border-slate-300 bg-white p-1">
+                        <button type="button" class="rounded px-3 py-1 text-sm" :class="viewMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-600'" @click="viewMode = 'list'">Lista</button>
+                        <button type="button" class="rounded px-3 py-1 text-sm" :class="viewMode === 'pipeline' ? 'bg-slate-900 text-white' : 'text-slate-600'" @click="viewMode = 'pipeline'">Pipeline</button>
+                    </div>
                 </div>
 
-                <div class="rounded-lg bg-white shadow-sm">
+                <div v-if="viewMode === 'list'" class="rounded-lg bg-white shadow-sm">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="bg-slate-50">
@@ -126,6 +148,26 @@ function destroy(client) {
                         </tbody>
                     </table>
                 </div>
+                </div>
+
+                <div v-else class="grid grid-cols-1 gap-4 overflow-x-auto lg:grid-cols-6">
+                    <div v-for="stage in stages" :key="stage.key" class="min-w-52 rounded-lg bg-slate-100 p-3">
+                        <div class="mb-3 flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-700">{{ stage.label }}</h3>
+                            <span class="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500">{{ stageClients(stage.key).length }}</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div v-for="client in stageClients(stage.key)" :key="client.id" class="rounded-md bg-white p-3 shadow-sm">
+                                <Link :href="route('sales.clients.show', client.id)" class="font-medium text-blue-600 hover:text-blue-500">{{ client.name }}</Link>
+                                <div v-if="client.company_name" class="mt-1 text-xs text-slate-400">{{ client.company_name }}</div>
+                                <select :value="client.pipeline_stage" class="mt-3 w-full rounded border-slate-300 text-xs" @change="updateStage(client, $event)">
+                                    <option v-for="option in stages" :key="option.key" :value="option.key">{{ option.label }}</option>
+                                </select>
+                                <div v-if="client.pipeline_stage === 'lost' && client.lost_reason" class="mt-2 text-xs text-red-600">{{ client.lost_reason }}</div>
+                            </div>
+                            <div v-if="!stageClients(stage.key).length" class="py-5 text-center text-xs text-slate-400">Niciun lead</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="clients.links.length > 3" class="mt-4 flex flex-wrap gap-2">

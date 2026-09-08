@@ -1,10 +1,11 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     invoice: Object,
 });
+const page = usePage();
 
 const statusClasses = {
     unpaid: 'bg-amber-100 text-amber-800',
@@ -19,6 +20,10 @@ function money(value) {
 
 function markPaid() {
     router.patch(route('admin.invoices.pay', props.invoice.id), {}, { preserveScroll: true });
+}
+
+function syncFgo() {
+    router.post(route('admin.invoices.fgo-sync', props.invoice.id), {}, { preserveScroll: true });
 }
 
 function destroy() {
@@ -52,6 +57,8 @@ function destroy() {
         <div class="py-8">
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
                 <div class="rounded-lg bg-white p-6 shadow-sm">
+                    <div v-if="page.props.flash.success" class="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">{{ page.props.flash.success }}</div>
+                    <div v-if="page.props.flash.error" class="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800">{{ page.props.flash.error }}</div>
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="text-sm text-slate-500">Client</div>
@@ -86,6 +93,28 @@ function destroy() {
                             <dd class="text-slate-900">{{ new Date(invoice.paid_at).toLocaleDateString('ro-RO') }}</dd>
                         </div>
                     </dl>
+
+                    <div class="mt-6 rounded-md border border-slate-200 bg-slate-50 p-4">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <div class="text-sm font-medium text-slate-700">Integrare FGO</div>
+                                <div class="mt-1 text-xs text-slate-500">
+                                    <span v-if="invoice.fgo_id">ID FGO: {{ invoice.fgo_id }}</span>
+                                    <span v-else>Factura nu este sincronizata.</span>
+                                </div>
+                            </div>
+                            <span
+                                class="rounded-full px-2 py-1 text-xs font-medium"
+                                :class="invoice.fgo_status === 'error' ? 'bg-red-100 text-red-700' : invoice.fgo_id ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'"
+                            >
+                                {{ invoice.fgo_status ?? 'neconfigurata' }}
+                            </span>
+                        </div>
+                        <p v-if="invoice.fgo_error" class="mt-2 text-xs text-red-600">{{ invoice.fgo_error }}</p>
+                        <button class="mt-3 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-white" @click="syncFgo">
+                            Sincronizeaza cu FGO
+                        </button>
+                    </div>
 
                     <button
                         v-if="invoice.status === 'unpaid'"

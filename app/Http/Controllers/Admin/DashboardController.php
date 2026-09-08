@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Equipment;
 use App\Models\Installation;
@@ -17,13 +18,25 @@ class DashboardController extends Controller
 {
     public function __invoke(): Response
     {
+        $offersCount = Offer::count();
+        $acceptedOffers = Offer::where('status', 'accepted')->count();
+
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
                 'clients' => Client::count(),
+                'leads' => Client::where('status', 'lead')->count(),
                 'offers' => Offer::count(),
+                'acceptedOffers' => $acceptedOffers,
+                'conversionRate' => $offersCount > 0 ? round(($acceptedOffers / $offersCount) * 100, 1) : 0,
                 'users' => User::count(),
                 'invoicesUnpaid' => Invoice::where('status', 'unpaid')->count(),
+                'unpaidAmount' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
                 'revenuePaid' => (float) Invoice::where('status', 'paid')->sum('amount'),
+                'revenueThisMonth' => (float) Invoice::where('status', 'paid')
+                    ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
+                    ->sum('amount'),
+                'pipelineValue' => (float) Offer::whereIn('status', ['draft', 'sent'])->sum('total_amount'),
+                'overdueActivities' => Activity::where('status', 'pending')->where('due_at', '<', now())->count(),
             ],
             'alerts' => $this->buildAlerts(),
             'recentLeads' => Client::where('status', 'lead')
@@ -45,6 +58,21 @@ class DashboardController extends Controller
                 ->latest()
                 ->take(5)
                 ->get(['id', 'client_id', 'subject', 'priority', 'status']),
+            'overdueActivities' => Activity::with('client:id,name')
+                ->where('status', 'pending')
+                ->where('due_at', '<', now())
+                ->orderBy('due_at')
+                ->take(5)
+                ->get(['id', 'client_id', 'title', 'priority', 'due_at']),
+            'upcomingActivities' => Activity::with('client:id,name')
+                ->where('status', 'pending')
+                ->where(function ($query) {
+                    $query->whereNull('due_at')->orWhere('due_at', '>=', now());
+                })
+                ->orderByRaw('due_at is null')
+                ->orderBy('due_at')
+                ->take(5)
+                ->get(['id', 'client_id', 'title', 'priority', 'due_at']),
         ]);
     }
 
@@ -76,6 +104,15 @@ class DashboardController extends Controller
                 'type' => 'danger',
                 'message' => "{$highPriorityOpenTickets} tichete cu prioritate ridicata deschise.",
                 'href' => route('technical.tickets.index', ['priority' => 'high']),
+            ];
+        }
+
+        $overdueActivities = Activity::where('status', 'pending')->where('due_at', '<', now())->count();
+        if ($overdueActivities > 0) {
+            $alerts[] = [
+                'type' => 'warning',
+                'message' => "{$overdueActivities} activitati comerciale au termenul depasit.",
+                'href' => route('sales.activities.index', ['status' => 'pending']),
             ];
         }
 

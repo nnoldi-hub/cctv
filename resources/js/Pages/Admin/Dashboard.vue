@@ -9,6 +9,8 @@ const props = defineProps({
     pendingOffers: Array,
     activeInstallations: Array,
     openTickets: Array,
+    overdueActivities: Array,
+    upcomingActivities: Array,
 });
 
 const alertClasses = {
@@ -91,6 +93,28 @@ function resolveTicket(ticket) {
                     <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg p-6">
                         <div class="text-sm text-gray-500">Venit incasat</div>
                         <div class="text-3xl font-semibold text-gray-900">{{ money(stats.revenuePaid) }} RON</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm text-gray-500">Lead-uri active</div>
+                        <div class="text-3xl font-semibold text-gray-900">{{ stats.leads }}</div>
+                    </div>
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm text-gray-500">Conversie oferte</div>
+                        <div class="text-3xl font-semibold text-blue-600">{{ stats.conversionRate }}%</div>
+                        <div class="mt-1 text-xs text-slate-400">{{ stats.acceptedOffers }} acceptate</div>
+                    </div>
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm text-gray-500">Pipeline comercial</div>
+                        <div class="text-2xl font-semibold text-gray-900">{{ money(stats.pipelineValue) }} RON</div>
+                        <div class="mt-1 text-xs text-slate-400">oferte draft si trimise</div>
+                    </div>
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm text-gray-500">Incasari luna curenta</div>
+                        <div class="text-2xl font-semibold text-green-600">{{ money(stats.revenueThisMonth) }} RON</div>
+                        <div class="mt-1 text-xs text-slate-400">total neincasat: {{ money(stats.unpaidAmount) }} RON</div>
                     </div>
                 </div>
 
@@ -234,6 +258,54 @@ function resolveTicket(ticket) {
                             </div>
                         </div>
                         <p v-else class="mt-4 text-sm text-slate-400">Niciun tichet deschis.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-500">Activitati restante</h3>
+                            <Link :href="route('sales.activities.index', { status: 'pending' })" class="text-sm text-blue-600 hover:text-blue-500">Vezi toate</Link>
+                        </div>
+                        <div v-if="overdueActivities.length" class="mt-4 divide-y divide-slate-100">
+                            <Link
+                                v-for="activity in overdueActivities"
+                                :key="activity.id"
+                                :href="route('sales.activities.index', { status: 'pending' })"
+                                class="flex items-center justify-between gap-3 py-3 hover:bg-slate-50"
+                            >
+                                <div>
+                                    <div class="font-medium text-slate-900">{{ activity.title }}</div>
+                                    <div class="text-xs text-slate-400">{{ activity.client.name }}</div>
+                                </div>
+                                <div class="text-right text-xs text-red-600">
+                                    {{ activity.due_at ? new Date(activity.due_at).toLocaleDateString('ro-RO') : '-' }}
+                                </div>
+                            </Link>
+                        </div>
+                        <p v-else class="mt-4 text-sm text-slate-400">Nu exista activitati restante.</p>
+                    </div>
+
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-500">Urmatoarele activitati</h3>
+                            <Link :href="route('sales.activities.index', { status: 'pending' })" class="text-sm text-blue-600 hover:text-blue-500">Agenda completa</Link>
+                        </div>
+                        <div v-if="upcomingActivities.length" class="mt-4 divide-y divide-slate-100">
+                            <Link
+                                v-for="activity in upcomingActivities"
+                                :key="activity.id"
+                                :href="route('sales.activities.index', { status: 'pending' })"
+                                class="flex items-center justify-between gap-3 py-3 hover:bg-slate-50"
+                            >
+                                <div>
+                                    <div class="font-medium text-slate-900">{{ activity.title }}</div>
+                                    <div class="text-xs text-slate-400">{{ activity.client.name }}</div>
+                                </div>
+                                <div class="text-right text-xs text-slate-500">
+                                    {{ activity.due_at ? new Date(activity.due_at).toLocaleDateString('ro-RO') : 'Fara termen' }}
+                                </div>
+                            </Link>
+                        </div>
+                        <p v-else class="mt-4 text-sm text-slate-400">Nu exista activitati planificate.</p>
                     </div>
                 </div>
             </div>

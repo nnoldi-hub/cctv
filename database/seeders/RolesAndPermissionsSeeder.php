@@ -35,6 +35,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'vanzari' => ['clients.view', 'clients.manage', 'offers.view', 'offers.manage', 'equipment.view'],
             'tehnic' => ['clients.view', 'equipment.view', 'equipment.manage', 'installations.view', 'installations.manage'],
             'suport' => ['clients.view', 'installations.view'],
+            'client' => [],
+            'client-manager' => [],
         ];
 
         foreach ($roles as $role => $rolePermissions) {

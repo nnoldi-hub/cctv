@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
@@ -24,7 +25,7 @@ class ClientController extends Controller
 
     public function index(Request $request): Response
     {
-        $clients = Client::query()
+        $query = Client::query()
             ->with('assignedTo:id,name')
             ->when($request->string('search')->toString(), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -36,28 +37,57 @@ class ClientController extends Controller
             })
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
             ->when($request->string('source')->toString(), fn ($query, $source) => $query->where('source', $source))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->latest();
+
+        $clients = (clone $query)->paginate(15)->withQueryString();
+        $pipeline = $query->get();
 
         return Inertia::render('Sales/Clients/Index', [
             'clients' => $clients,
             'filters' => $request->only('search', 'status', 'source'),
+            'pipeline' => $pipeline,
         ]);
+    }
+
+    public function updatePipeline(Request $request, Client $client): RedirectResponse
+    {
+        $data = $request->validate([
+            'pipeline_stage' => ['required', 'in:new,contacted,visit,proposal,won,lost'],
+            'lost_reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($data['pipeline_stage'] !== 'lost') {
+            $data['lost_reason'] = null;
+        }
+
+        if ($data['pipeline_stage'] === 'won') {
+            $data['status'] = 'client';
+        } elseif ($data['pipeline_stage'] === 'lost') {
+            $data['status'] = 'inactive';
+        }
+
+        $client->update($data);
+
+        return back()->with('success', 'Etapa pipeline actualizata.');
     }
 
     public function create(): Response
     {
         return Inertia::render('Sales/Clients/Create', [
             'users' => User::orderBy('name')->get(['id', 'name']),
+            'portalUsers' => auth()->user()->hasRole('admin')
+                ? User::role(['client', 'client-manager'])->orderBy('name')->get(['id', 'name', 'email'])
+                : [],
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateData($request);
+        $portalData = $this->portalData($request);
 
         $client = Client::create($data);
+        $this->syncPortalAccount($client, $portalData);
 
         return redirect()->route('sales.clients.show', $client)->with('success', 'Client adaugat cu succes.');
     }
@@ -66,29 +96,50 @@ class ClientController extends Controller
     {
         $client->load([
             'assignedTo:id,name',
+            'user:id,name,email',
+            'user.roles:id,name',
             'offers' => fn ($query) => $query->latest(),
             'installations' => fn ($query) => $query->latest('scheduled_at'),
             'invoices' => fn ($query) => $query->latest(),
+            'subscriptions' => fn ($query) => $query->latest('started_at'),
+            'tickets' => fn ($query) => $query->with('assignedTo:id,name')->latest(),
+            'activities' => fn ($query) => $query->with('assignedTo:id,name')->latest('due_at'),
         ]);
 
         return Inertia::render('Sales/Clients/Show', [
             'client' => $client,
+            'summary' => [
+                'offers' => $client->offers->count(),
+                'installations' => $client->installations->count(),
+                'invoices' => $client->invoices->count(),
+                'invoiceTotal' => (float) $client->invoices->sum('amount'),
+                'openTickets' => $client->tickets->whereNotIn('status', ['resolved', 'closed'])->count(),
+                'activeSubscriptions' => $client->subscriptions->where('status', 'active')->count(),
+                'pendingActivities' => $client->activities->where('status', 'pending')->count(),
+            ],
         ]);
     }
 
     public function edit(Client $client): Response
     {
+        $client->load('user.roles:id,name');
+
         return Inertia::render('Sales/Clients/Edit', [
             'client' => $client,
             'users' => User::orderBy('name')->get(['id', 'name']),
+            'portalUsers' => auth()->user()->hasRole('admin')
+                ? User::role(['client', 'client-manager'])->orderBy('name')->get(['id', 'name', 'email'])
+                : [],
         ]);
     }
 
     public function update(Request $request, Client $client): RedirectResponse
     {
         $data = $this->validateData($request, $client);
+        $portalData = $this->portalData($request, $client);
 
         $client->update($data);
+        $this->syncPortalAccount($client, $portalData);
 
         return redirect()->route('sales.clients.show', $client)->with('success', 'Client actualizat cu succes.');
     }
@@ -112,8 +163,40 @@ class ClientController extends Controller
             'county' => ['nullable', 'string', 'max:255'],
             'source' => ['required', 'in:web,phone,referral,manual'],
             'status' => ['required', 'in:lead,client,inactive'],
+            'pipeline_stage' => ['required', 'in:new,contacted,visit,proposal,won,lost'],
+            'lost_reason' => ['nullable', 'string', 'max:255'],
             'assigned_to' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
+    }
+
+    private function portalData(Request $request, ?Client $client = null): array
+    {
+        if (! $request->hasAny(['portal_user_id', 'portal_role'])) {
+            return [];
+        }
+
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        return $request->validate([
+            'portal_user_id' => ['nullable', 'exists:users,id', Rule::unique('clients', 'user_id')->ignore($client?->id)],
+            'portal_role' => ['required_with:portal_user_id', 'nullable', 'in:client,client-manager'],
+        ]);
+    }
+
+    private function syncPortalAccount(Client $client, array $data): void
+    {
+        if (! array_key_exists('portal_user_id', $data)) {
+            return;
+        }
+
+        $client->update(['user_id' => $data['portal_user_id'] ?: null]);
+
+        if (! empty($data['portal_user_id'])) {
+            $user = User::findOrFail($data['portal_user_id']);
+            $user->removeRole('client');
+            $user->removeRole('client-manager');
+            $user->assignRole($data['portal_role']);
+        }
     }
 }

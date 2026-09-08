@@ -30,16 +30,26 @@ class Installation extends Model
         'latitude',
         'longitude',
         'scheduled_at',
+        'labor_hours',
         'status',
         'notes',
         'checklist',
+        'materials',
+        'photos',
+        'customer_name',
+        'customer_notes',
+        'completed_at',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'labor_hours' => 'decimal:2',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
         'checklist' => 'array',
+        'materials' => 'array',
+        'photos' => 'array',
+        'completed_at' => 'datetime',
     ];
 
     public function client(): BelongsTo

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Page;
 use App\Notifications\NewLeadReceived;
 use App\Services\SmsService;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,7 @@ class ContactController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Public/Contact');
+        return Inertia::render('Public/Contact', ['page' => Page::published()->where('slug', 'contact')->first()]);
     }
 
     public function store(Request $request, SmsService $sms): RedirectResponse

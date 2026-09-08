@@ -21,10 +21,15 @@ const form = useForm({
     scheduled_at: '',
     status: 'scheduled',
     notes: '',
+    labor_hours: null,
+    materials: '',
+    customer_name: '',
+    customer_notes: '',
+    photos: [],
 });
 
 function submit() {
-    form.post(route('technical.installations.store'));
+    form.post(route('technical.installations.store'), { forceFormData: true });
 }
 </script>
 

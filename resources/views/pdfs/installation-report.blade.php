@@ -61,6 +61,24 @@
         </div>
     @endif
 
+    @if ($installation->labor_hours || $installation->materials)
+        <div class="section">
+            <strong>Executie</strong>
+            <table>
+                <tr><td style="width: 30%;"><strong>Ore lucrate:</strong></td><td>{{ $installation->labor_hours ?? '-' }}</td></tr>
+                <tr><td><strong>Materiale:</strong></td><td>{{ !empty($installation->materials) ? implode(', ', $installation->materials) : '-' }}</td></tr>
+            </table>
+        </div>
+    @endif
+
+    @if ($installation->customer_name || $installation->customer_notes)
+        <div class="section">
+            <strong>Confirmare client</strong>
+            <p>Nume: {{ $installation->customer_name ?? '-' }}</p>
+            <p>{{ $installation->customer_notes }}</p>
+        </div>
+    @endif
+
     <div class="section muted">
         Raport generat automat prin platforma CCTV Security.
     </div>

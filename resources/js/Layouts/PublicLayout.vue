@@ -23,14 +23,13 @@ const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(companyAddre
 
 <template>
     <div class="flex min-h-screen flex-col bg-white">
-        <header class="sticky top-0 z-30 border-b border-slate-800 bg-brand-navy">
+        <header class="sticky top-0 z-30 border-b border-slate-700/80 bg-[#021a2d]">
             <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
                 <Link :href="route('public.home')" class="flex items-center gap-2 text-white">
-                    <ApplicationLogo class="h-8 w-8" />
-                    <span class="font-display text-lg font-bold tracking-tight">CCTV <span class="text-orange-500">Security</span></span>
+                    <img src="/branding/logo-cctv.png" alt="CCTV Security" class="h-10 w-auto max-w-[220px] object-contain sm:h-12" />
                 </Link>
 
-                <div class="hidden items-center gap-6 lg:flex">
+                <div class="hidden items-center gap-7 lg:flex">
                     <Link
                         v-for="item in nav"
                         :key="item.name"
@@ -44,10 +43,10 @@ const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(companyAddre
                 <div class="hidden items-center gap-3 lg:flex">
                     <Link
                         v-if="page.props.auth.user"
-                        :href="route('dashboard')"
+                        :href="page.props.auth.roles?.includes('client') || page.props.auth.roles?.includes('client-manager') ? route('client.dashboard') : route('dashboard')"
                         class="rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:text-white"
                     >
-                        Contul meu
+                        Autentificare
                     </Link>
                     <Link
                         v-else
@@ -131,8 +130,7 @@ const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(companyAddre
                     <div class="grid grid-cols-1 gap-8 sm:grid-cols-3">
                         <div>
                             <div class="flex items-center gap-2 text-white">
-                                <ApplicationLogo class="h-7 w-7" />
-                                <span class="font-display text-base font-bold">CCTV <span class="text-orange-500">Security</span></span>
+                                <img src="/branding/logo-cctv.png" alt="CCTV Security" class="h-6 w-auto max-w-[150px] object-contain" />
                             </div>
                             <p class="mt-3 text-sm">
                                 Sisteme de supraveghere video pentru locuinte si firme.

@@ -6,6 +6,7 @@ import ClientForm from './Partials/ClientForm.vue';
 const props = defineProps({
     client: Object,
     users: Array,
+    portalUsers: Array,
 });
 
 const form = useForm({
@@ -18,8 +19,12 @@ const form = useForm({
     county: props.client.county,
     source: props.client.source,
     status: props.client.status,
+    pipeline_stage: props.client.pipeline_stage ?? 'new',
+    lost_reason: props.client.lost_reason ?? '',
     assigned_to: props.client.assigned_to,
     notes: props.client.notes,
+    portal_user_id: props.client.user_id,
+    portal_role: props.client.user?.roles?.find((role) => ['client', 'client-manager'].includes(role.name))?.name || 'client',
 });
 
 function submit() {
@@ -38,7 +43,7 @@ function submit() {
         <div class="py-8">
             <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
                 <form class="space-y-6 rounded-lg bg-white p-6 shadow-sm" @submit.prevent="submit">
-                    <ClientForm :form="form" :users="users" />
+                    <ClientForm :form="form" :users="users" :portal-users="portalUsers" />
                     <div class="flex justify-end gap-3">
                         <button type="submit" :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
                             Salveaza modificarile

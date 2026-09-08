@@ -12,6 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,6 +50,7 @@ class InstallationController extends Controller
     {
         $data = $this->validateData($request);
         $data['checklist'] = Installation::defaultChecklist();
+        $data = $this->processExecutionDetails($request, $data);
 
         $installation = Installation::create($data);
 
@@ -76,7 +78,8 @@ class InstallationController extends Controller
 
     public function update(Request $request, Installation $installation): RedirectResponse
     {
-        $installation->update($this->validateData($request));
+        $data = $this->processExecutionDetails($request, $this->validateData($request), $installation);
+        $installation->update($data);
 
         return redirect()->route('technical.installations.show', $installation)->with('success', 'Programare actualizata.');
     }
@@ -90,6 +93,7 @@ class InstallationController extends Controller
         $installation->update($data);
 
         if ($data['status'] === 'completed') {
+            $installation->update(['completed_at' => $installation->completed_at ?? now()]);
             $this->createInvoiceFromCompletedInstallation($installation);
         }
 
@@ -161,8 +165,33 @@ class InstallationController extends Controller
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'scheduled_at' => ['nullable', 'date'],
+            'labor_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'status' => ['required', 'in:scheduled,in_progress,completed,cancelled'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'materials' => ['nullable', 'string', 'max:5000'],
+            'customer_name' => ['nullable', 'string', 'max:255'],
+            'customer_notes' => ['nullable', 'string', 'max:2000'],
+            'photos.*' => ['nullable', 'image', 'max:5120'],
         ]);
+    }
+
+    private function processExecutionDetails(Request $request, array $data, ?Installation $installation = null): array
+    {
+        $data['materials'] = array_values(array_filter(array_map(
+            'trim',
+            preg_split('/\r\n|\r|\n/', $data['materials'] ?? '')
+        )));
+        unset($data['photos']);
+
+        $photos = [];
+        foreach ($request->file('photos', []) as $photo) {
+            $photos[] = Storage::disk('public')->url($photo->store('installations', 'public'));
+        }
+
+        if ($photos) {
+            $data['photos'] = array_values(array_merge($installation?->photos ?? [], $photos));
+        }
+
+        return $data;
     }
 }

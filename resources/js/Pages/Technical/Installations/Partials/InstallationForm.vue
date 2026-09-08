@@ -78,5 +78,29 @@ function useClientAddress() {
             <label class="block text-sm font-medium text-slate-700">Note tehnice</label>
             <textarea v-model="form.notes" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
         </div>
+        <div class="sm:col-span-2 border-t border-slate-200 pt-5">
+            <h3 class="text-sm font-semibold text-slate-700">Date executie si proces-verbal</h3>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Ore lucrate</label>
+            <input v-model.number="form.labor_hours" type="number" min="0" step="0.25" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Nume client la receptie</label>
+            <input v-model="form.customer_name" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
+        </div>
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700">Materiale consumate (cate unul pe rand)</label>
+            <textarea v-model="form.materials" rows="4" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
+        </div>
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700">Observatii client / receptie</label>
+            <textarea v-model="form.customer_notes" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
+        </div>
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700">Fotografii lucrare</label>
+            <input type="file" accept="image/*" multiple class="mt-1 block w-full text-sm text-slate-600" @change="form.photos = [...$event.target.files]" />
+            <p class="mt-1 text-xs text-slate-400">Maxim 5 MB per fotografie.</p>
+        </div>
     </div>
 </template>

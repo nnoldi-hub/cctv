@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,7 @@ class UserController extends Controller
         $user->forceFill(['email_verified_at' => now()])->save();
 
         $user->assignRole($data['role']);
+        AuditLog::record($request->user(), 'user.created', "Utilizator creat: {$user->email}.", $user, ['role' => $data['role']]);
 
         return redirect()->route('admin.users.index')->with('success', 'Utilizator creat.');
     }
@@ -80,6 +82,7 @@ class UserController extends Controller
         ]);
 
         $user->syncRoles([$data['role']]);
+        AuditLog::record($request->user(), 'user.updated', "Utilizator actualizat: {$user->email}.", $user, ['role' => $data['role'], 'password_changed' => ! empty($data['password'])]);
 
         return redirect()->route('admin.users.index')->with('success', 'Utilizator actualizat.');
     }
@@ -89,6 +92,7 @@ class UserController extends Controller
         abort_if($user->id === $request->user()->id, 422, 'Nu iti poti sterge propriul cont.');
 
         $user->delete();
+        AuditLog::record($request->user(), 'user.deleted', "Utilizator sters: {$user->email}.", null, ['deleted_user_id' => $user->id]);
 
         return redirect()->route('admin.users.index')->with('success', 'Utilizator sters.');
     }
