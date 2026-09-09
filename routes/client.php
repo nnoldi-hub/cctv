@@ -8,6 +8,7 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureClientPortal::
     Route::get('/tichete', [PortalController::class, 'tickets'])->name('tickets.index');
     Route::post('/tichete', [PortalController::class, 'storeTicket'])->name('tickets.store');
     Route::get('/lucrari', [PortalController::class, 'works'])->name('works.index');
+    Route::get('/lucrari/{installation}/raport', [PortalController::class, 'workReport'])->name('works.report');
     Route::get('/facturi', [PortalController::class, 'invoices'])->name('invoices.index');
     Route::get('/facturi/{invoice}/pdf', [PortalController::class, 'invoicePdf'])->name('invoices.pdf');
     Route::get('/abonament', [PortalController::class, 'subscriptions'])->name('subscriptions.index');

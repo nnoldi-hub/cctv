@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Equipment;
 use App\Models\Ticket;
+use App\Models\Installation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -33,7 +34,7 @@ class PortalController extends Controller
     {
         $client = $request->user()->clientProfile;
 
-        return Inertia::render('Client/Tickets/Index', ['tickets' => $client->tickets()->with('assignedTo:id,name')->latest()->paginate(10)]);
+        return Inertia::render('Client/Tickets/Index', ['tickets' => $client->tickets()->with(['assignedTo:id,name', 'events.user:id,name'])->latest()->paginate(10)]);
     }
 
     public function storeTicket(Request $request): RedirectResponse
@@ -44,7 +45,12 @@ class PortalController extends Controller
             'priority' => ['required', 'in:low,medium,high'],
         ]);
         $data['client_id'] = $request->user()->clientProfile->id;
-        Ticket::create($data);
+        $ticket = Ticket::create($data);
+        $ticket->events()->create([
+            'user_id' => $request->user()->id,
+            'type' => 'created',
+            'description' => 'Cerere trimisă de client.',
+        ]);
 
         return back()->with('success', 'Cererea a fost trimisa.');
     }
@@ -54,6 +60,14 @@ class PortalController extends Controller
         $client = $request->user()->clientProfile;
 
         return Inertia::render('Client/Works/Index', ['works' => $client->installations()->with('technician:id,name')->latest('scheduled_at')->paginate(10)]);
+    }
+
+    public function workReport(Request $request, int $installation): SymfonyResponse
+    {
+        $record = $request->user()->clientProfile->installations()->with(['client', 'technician:id,name'])->findOrFail($installation);
+
+        return Pdf::loadView('pdfs.installation-report', ['installation' => $record])
+            ->stream("raport-lucrare-{$record->id}.pdf");
     }
 
     public function invoices(Request $request): Response

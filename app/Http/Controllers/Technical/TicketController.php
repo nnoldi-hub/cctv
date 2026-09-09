@@ -41,13 +41,18 @@ class TicketController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $ticket = Ticket::create($this->validateData($request));
+        $ticket->events()->create([
+            'user_id' => $request->user()->id,
+            'type' => 'created',
+            'description' => 'Tichet creat.',
+        ]);
 
         return redirect()->route('technical.tickets.show', $ticket)->with('success', 'Tichet creat.');
     }
 
     public function show(Ticket $ticket): Response
     {
-        $ticket->load(['client', 'assignedTo:id,name', 'installation', 'comments.user:id,name']);
+        $ticket->load(['client', 'assignedTo:id,name', 'installation', 'comments.user:id,name', 'events.user:id,name']);
 
         return Inertia::render('Technical/Tickets/Show', [
             'ticket' => $ticket,
@@ -77,6 +82,11 @@ class TicketController extends Controller
         ]);
 
         $ticket->update($data);
+        $ticket->events()->create([
+            'user_id' => $request->user()->id,
+            'type' => 'status',
+            'description' => 'Status actualizat la: '.$data['status'].'.',
+        ]);
 
         return back()->with('success', 'Status tichet actualizat.');
     }
@@ -90,6 +100,11 @@ class TicketController extends Controller
         $ticket->comments()->create([
             'user_id' => $request->user()->id,
             'body' => $data['body'],
+        ]);
+        $ticket->events()->create([
+            'user_id' => $request->user()->id,
+            'type' => 'comment',
+            'description' => 'Răspuns adăugat: '.$data['body'],
         ]);
 
         return back()->with('success', 'Comentariu adaugat.');
