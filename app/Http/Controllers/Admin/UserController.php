@@ -27,7 +27,7 @@ class UserController extends Controller
     public function create(): Response
     {
         return Inertia::render('Admin/Users/Create', [
-            'roles' => Role::pluck('name'),
+            'roles' => Role::whereNotIn('name', ['client', 'client-manager'])->pluck('name'),
             'permissions' => Permission::orderBy('name')->pluck('name'),
         ]);
     }
@@ -39,7 +39,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', Rule::in(Role::pluck('name'))],
+            'role' => ['required', Rule::in(Role::whereNotIn('name', ['client', 'client-manager'])->pluck('name'))],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::in(Permission::pluck('name'))],
         ]);
