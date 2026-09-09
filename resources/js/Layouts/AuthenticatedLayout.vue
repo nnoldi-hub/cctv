@@ -7,7 +7,11 @@ import { computed, reactive, ref } from 'vue';
 
 const page = usePage();
 const roles = computed(() => page.props.auth.roles ?? []);
+const permissions = computed(() => page.props.auth.permissions ?? []);
 const hasRole = (...names) => names.some((name) => roles.value.includes(name));
+const hasPermission = (...names) => names.some((name) => permissions.value.includes(name));
+const hasAccess = (rolesToCheck, permissionsToCheck = []) =>
+    hasRole(...rolesToCheck) || hasPermission(...permissionsToCheck);
 
 const sections = [
     {
@@ -15,6 +19,7 @@ const sections = [
         name: 'Vanzari',
         icon: 'briefcase',
         roles: ['admin', 'vanzari'],
+        permissions: ['clients.view', 'clients.manage', 'offers.view', 'offers.manage'],
         items: [
             { name: 'Clienti', route: 'sales.clients.index' },
             { name: 'Lead-uri', route: 'sales.clients.index', query: { status: 'lead' } },
@@ -28,10 +33,11 @@ const sections = [
         name: 'Tehnic',
         icon: 'wrench',
         roles: ['admin', 'tehnic', 'suport'],
+        permissions: ['equipment.view', 'equipment.manage', 'installations.view', 'installations.manage'],
         items: [
-            { name: 'Echipamente', route: 'technical.equipment.index', roles: ['admin', 'tehnic'] },
-            { name: 'Stoc scazut', route: 'technical.equipment.index', query: { low_stock: 1 }, roles: ['admin', 'tehnic'] },
-            { name: 'Instalari', route: 'technical.installations.index', roles: ['admin', 'tehnic'] },
+            { name: 'Echipamente', route: 'technical.equipment.index', roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
+            { name: 'Stoc scazut', route: 'technical.equipment.index', query: { low_stock: 1 }, roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
+            { name: 'Instalari', route: 'technical.installations.index', roles: ['admin', 'tehnic'], permissions: ['installations.view', 'installations.manage'] },
             { name: 'Tichete', route: 'technical.tickets.index', roles: ['admin', 'tehnic', 'suport'] },
         ],
     },
@@ -57,12 +63,12 @@ const sections = [
 ];
 
 function itemVisible(item, section) {
-    return hasRole(...(item.roles ?? section.roles));
+    return hasAccess(item.roles ?? section.roles, item.permissions ?? section.permissions);
 }
 
 const visibleSections = computed(() =>
     sections
-        .filter((section) => hasRole(...section.roles))
+        .filter((section) => hasAccess(section.roles, section.permissions))
         .map((section) => ({ ...section, items: section.items.filter((item) => itemVisible(item, section)) }))
 );
 

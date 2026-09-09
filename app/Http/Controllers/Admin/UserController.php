@@ -12,13 +12,14 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller
 {
     public function index(): Response
     {
         return Inertia::render('Admin/Users/Index', [
-            'users' => User::with('roles:id,name')->orderBy('name')->paginate(15),
+            'users' => User::with(['roles:id,name', 'permissions:id,name'])->orderBy('name')->paginate(15),
             'roles' => Role::pluck('name'),
         ]);
     }
@@ -27,6 +28,7 @@ class UserController extends Controller
     {
         return Inertia::render('Admin/Users/Create', [
             'roles' => Role::pluck('name'),
+            'permissions' => Permission::orderBy('name')->pluck('name'),
         ]);
     }
 
@@ -38,6 +40,8 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['required', Rule::in(Role::pluck('name'))],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in(Permission::pluck('name'))],
         ]);
 
         $user = User::create([
@@ -51,6 +55,7 @@ class UserController extends Controller
         $user->forceFill(['email_verified_at' => now()])->save();
 
         $user->assignRole($data['role']);
+        $user->syncPermissions($data['permissions'] ?? []);
         AuditLog::record($request->user(), 'user.created', "Utilizator creat: {$user->email}.", $user, ['role' => $data['role']]);
 
         return redirect()->route('admin.users.index')->with('success', 'Utilizator creat.');
@@ -59,8 +64,9 @@ class UserController extends Controller
     public function edit(User $user): Response
     {
         return Inertia::render('Admin/Users/Edit', [
-            'user' => $user->load('roles:id,name'),
+            'user' => $user->load(['roles:id,name', 'permissions:id,name']),
             'roles' => Role::pluck('name'),
+            'permissions' => Permission::orderBy('name')->pluck('name'),
         ]);
     }
 
@@ -72,6 +78,8 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['required', Rule::in(Role::pluck('name'))],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', Rule::in(Permission::pluck('name'))],
         ]);
 
         $user->update([
@@ -82,6 +90,7 @@ class UserController extends Controller
         ]);
 
         $user->syncRoles([$data['role']]);
+        $user->syncPermissions($data['permissions'] ?? []);
         AuditLog::record($request->user(), 'user.updated', "Utilizator actualizat: {$user->email}.", $user, ['role' => $data['role'], 'password_changed' => ! empty($data['password'])]);
 
         return redirect()->route('admin.users.index')->with('success', 'Utilizator actualizat.');
