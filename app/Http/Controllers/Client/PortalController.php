@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Equipment;
 use App\Models\Ticket;
 use App\Models\Installation;
+use App\Notifications\TicketUpdated;
+use App\Services\SmsService;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -37,7 +40,7 @@ class PortalController extends Controller
         return Inertia::render('Client/Tickets/Index', ['tickets' => $client->tickets()->with(['assignedTo:id,name', 'events.user:id,name'])->latest()->paginate(10)]);
     }
 
-    public function storeTicket(Request $request): RedirectResponse
+    public function storeTicket(Request $request, SmsService $sms): RedirectResponse
     {
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
@@ -51,6 +54,13 @@ class PortalController extends Controller
             'type' => 'created',
             'description' => 'Cerere trimisă de client.',
         ]);
+        $recipients = $ticket->client->user;
+        if ($recipients) {
+            Notification::send($recipients, new TicketUpdated($ticket, 'Cererea ta a fost înregistrată și va fi preluată de echipa noastră.'));
+        }
+        if ($ticket->client->phone) {
+            $sms->send($ticket->client->phone, "CCTV: Cererea #{$ticket->id} a fost inregistrata.");
+        }
 
         return back()->with('success', 'Cererea a fost trimisa.');
     }

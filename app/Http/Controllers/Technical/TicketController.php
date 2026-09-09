@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Notifications\TicketUpdated;
+use App\Services\SmsService;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -75,7 +78,7 @@ class TicketController extends Controller
         return redirect()->route('technical.tickets.show', $ticket)->with('success', 'Tichet actualizat.');
     }
 
-    public function updateStatus(Request $request, Ticket $ticket): RedirectResponse
+    public function updateStatus(Request $request, Ticket $ticket, SmsService $sms): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['required', 'in:open,in_progress,resolved,closed'],
@@ -87,11 +90,17 @@ class TicketController extends Controller
             'type' => 'status',
             'description' => 'Status actualizat la: '.$data['status'].'.',
         ]);
+        if ($ticket->client->user) {
+            Notification::send($ticket->client->user, new TicketUpdated($ticket, 'Statusul cererii a fost actualizat la '.$data['status'].'.'));
+        }
+        if ($ticket->client->phone) {
+            $sms->send($ticket->client->phone, "CCTV: Cererea #{$ticket->id} are statusul {$data['status']}.");
+        }
 
         return back()->with('success', 'Status tichet actualizat.');
     }
 
-    public function addComment(Request $request, Ticket $ticket): RedirectResponse
+    public function addComment(Request $request, Ticket $ticket, SmsService $sms): RedirectResponse
     {
         $data = $request->validate([
             'body' => ['required', 'string', 'max:2000'],
@@ -106,6 +115,12 @@ class TicketController extends Controller
             'type' => 'comment',
             'description' => 'Răspuns adăugat: '.$data['body'],
         ]);
+        if ($ticket->client->user) {
+            Notification::send($ticket->client->user, new TicketUpdated($ticket, 'Ai primit un răspuns nou la cererea ta.'));
+        }
+        if ($ticket->client->phone) {
+            $sms->send($ticket->client->phone, "CCTV: Ai primit un raspuns la cererea #{$ticket->id}.");
+        }
 
         return back()->with('success', 'Comentariu adaugat.');
     }
