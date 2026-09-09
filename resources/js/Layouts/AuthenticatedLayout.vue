@@ -121,10 +121,13 @@ const mobileOpen = ref(false);
             class="fixed inset-y-0 left-0 z-50 flex flex-col bg-brand-navy transition-all duration-200 lg:static lg:flex"
             :class="[collapsed ? 'lg:w-20' : 'lg:w-64', mobileOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0']"
         >
-            <div class="flex h-16 flex-shrink-0 items-center gap-2 border-b border-white/10 px-4">
+            <div class="flex h-20 flex-shrink-0 items-center gap-2 border-b border-white/10 px-4">
                 <Link :href="route('dashboard')" class="flex min-w-0 items-center gap-2">
-                    <img src="/branding/mark-color-512.png" alt="CCTV Security" class="h-8 w-8 flex-shrink-0 object-contain" />
-                    <img v-if="!collapsed" src="/branding/logo-cctv.png" alt="CCTV Security" class="h-6 w-auto max-w-[140px] object-contain" />
+                    <img
+                        src="/branding/logo-cctv.png"
+                        alt="CCTV Security"
+                        class="h-12 w-auto max-w-[190px] flex-shrink-0 object-contain"
+                    />
                 </Link>
                 <button type="button" class="ml-auto text-slate-400 hover:text-white lg:hidden" @click="mobileOpen = false">
                     <Icon name="close" class="h-5 w-5" />
