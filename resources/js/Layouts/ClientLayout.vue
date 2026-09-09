@@ -14,7 +14,10 @@ function signOut() { logout.post(route('logout')); }
     <div class="min-h-screen bg-slate-100">
         <header class="bg-brand-navy text-white shadow">
             <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-                <Link :href="route('client.dashboard')" class="flex items-center gap-2"><ApplicationLogo class="h-8 w-8" /><span class="font-display font-bold">Portal <span class="text-orange-400">Client</span></span></Link>
+                <Link :href="route('client.dashboard')" class="flex items-center gap-2">
+                    <ApplicationLogo class="h-10 w-auto max-w-[150px]" />
+                    <span class="font-display font-bold">Portal <span class="text-orange-400">Client</span></span>
+                </Link>
                 <div class="flex items-center gap-4 text-sm"><span class="hidden text-slate-300 sm:inline">{{ user.name }}</span><button class="text-slate-300 hover:text-white" @click="signOut">Iesire</button></div>
             </div>
         </header>
