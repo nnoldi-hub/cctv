@@ -4,6 +4,8 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Client;
 use App\Models\Equipment;
+use App\Models\Expense;
+use App\Models\Supplier;
 use App\Models\Installation;
 use App\Models\Invoice;
 use App\Models\Offer;
@@ -33,6 +35,26 @@ class ReportsAndDashboardTest extends TestCase
         $this->actingAs($this->adminUser)
             ->get(route('admin.reports'))
             ->assertOk();
+    }
+
+    public function test_reports_include_expense_analytics(): void
+    {
+        $supplier = Supplier::create(['name' => 'Furnizor raport']);
+        Expense::create([
+            'supplier_id' => $supplier->id,
+            'description' => 'Material raport',
+            'category' => 'material',
+            'amount' => 320,
+            'expense_date' => '2026-09-10',
+        ]);
+
+        $this->actingAs($this->adminUser)
+            ->get(route('admin.reports'))
+            ->assertInertia(fn ($page) => $page
+                ->where('financial.expensesTotal', 320)
+                ->where('financial.expensesByCategory.material', 320)
+                ->where('financial.expensesBySupplier.Furnizor raport', 320)
+            );
     }
 
     public function test_sms_logs_page_loads(): void

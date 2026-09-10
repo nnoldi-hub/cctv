@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Installation;
 use App\Models\Invoice;
+use App\Models\Expense;
 use App\Models\Offer;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,15 @@ class ReportController extends Controller
                 'unpaidTotal' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
                 'paidTotal' => (float) Invoice::where('status', 'paid')->sum('amount'),
                 'overdueCount' => Invoice::where('status', 'unpaid')->where('due_at', '<', now())->count(),
+                'expensesTotal' => (float) Expense::sum('amount'),
+                'expensesByCategory' => Expense::select('category', DB::raw('sum(amount) as total'))->groupBy('category')->pluck('total', 'category'),
+                'expensesBySupplier' => Expense::query()
+                    ->leftJoin('suppliers', 'suppliers.id', '=', 'expenses.supplier_id')
+                    ->selectRaw("COALESCE(suppliers.name, 'Fara furnizor') as supplier, SUM(expenses.amount) as total")
+                    ->groupBy('suppliers.name')
+                    ->orderByDesc('total')
+                    ->limit(8)
+                    ->pluck('total', 'supplier'),
             ],
         ]);
     }

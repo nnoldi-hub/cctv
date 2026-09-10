@@ -4,6 +4,7 @@ import { computed } from 'vue';
 const props = defineProps({
     data: { type: Object, required: true }, // { label: count }
     labels: { type: Object, default: () => ({}) }, // { key: displayLabel }
+    valueFormat: { type: Function, default: (value) => value },
 });
 
 const entries = computed(() => Object.entries(props.data));
@@ -25,7 +26,7 @@ function displayLabel(key) {
             <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                 <div class="h-full rounded-full bg-blue-600" :style="{ width: widthPercent(value) + '%' }" />
             </div>
-            <span class="w-8 flex-shrink-0 text-right text-xs font-medium text-slate-900">{{ value }}</span>
+            <span class="w-8 flex-shrink-0 text-right text-xs font-medium text-slate-900">{{ props.valueFormat(value) }}</span>
         </div>
         <p v-if="!entries.length" class="text-sm text-slate-400">Fara date.</p>
     </div>

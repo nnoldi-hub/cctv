@@ -37,6 +37,7 @@ const ticketPriorityLabels = {
     medium: 'Medie',
     high: 'Ridicata',
 };
+const expenseCategoryLabels = { material: 'Materiale', transport: 'Transport', manopera: 'Manopera', other: 'Altele' };
 
 function money(value) {
     return Number(value).toLocaleString('ro-RO', { minimumFractionDigits: 2 });
@@ -110,6 +111,14 @@ function money(value) {
                         <h4 class="mt-6 text-xs font-semibold uppercase text-slate-400">Tichete pe status</h4>
                         <div class="mt-3">
                             <HorizontalBarList :data="technical.ticketsByStatus" :labels="ticketStatusLabels" />
+                        </div>
+                        <h4 class="mt-6 text-xs font-semibold uppercase text-slate-400">Cheltuieli pe categorie</h4>
+                        <div class="mt-3">
+                            <HorizontalBarList :data="financial.expensesByCategory" :labels="expenseCategoryLabels" :value-format="(value) => `${money(value)} lei`" />
+                        </div>
+                        <h4 class="mt-6 text-xs font-semibold uppercase text-slate-400">Cheltuieli pe furnizor</h4>
+                        <div class="mt-3">
+                            <HorizontalBarList :data="financial.expensesBySupplier" :value-format="(value) => `${money(value)} lei`" />
                         </div>
                     </section>
                 </div>
