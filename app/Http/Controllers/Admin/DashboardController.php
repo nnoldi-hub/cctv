@@ -18,6 +18,7 @@ class DashboardController extends Controller
 {
     public function __invoke(): Response
     {
+        $this->markOverdueInvoices();
         $offersCount = Offer::count();
         $acceptedOffers = Offer::where('status', 'accepted')->count();
 
@@ -27,10 +28,15 @@ class DashboardController extends Controller
                 'leads' => Client::where('status', 'lead')->count(),
                 'offers' => Offer::count(),
                 'acceptedOffers' => $acceptedOffers,
+                'acceptedValue' => (float) Offer::where('status', 'accepted')->sum('total_amount'),
+                'installationsActive' => Installation::whereIn('status', ['scheduled', 'in_progress'])->count(),
+                'installationsCompleted' => Installation::where('status', 'completed')->count(),
                 'conversionRate' => $offersCount > 0 ? round(($acceptedOffers / $offersCount) * 100, 1) : 0,
                 'users' => User::count(),
                 'invoicesUnpaid' => Invoice::where('status', 'unpaid')->count(),
+                'invoicesOverdue' => Invoice::where('status', 'overdue')->count(),
                 'unpaidAmount' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
+                'overdueAmount' => (float) Invoice::where('status', 'overdue')->sum('amount'),
                 'revenuePaid' => (float) Invoice::where('status', 'paid')->sum('amount'),
                 'revenueThisMonth' => (float) Invoice::where('status', 'paid')
                     ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
@@ -89,12 +95,12 @@ class DashboardController extends Controller
             ];
         }
 
-        $overdueInvoices = Invoice::where('status', 'unpaid')->where('due_at', '<', now())->count();
+        $overdueInvoices = Invoice::where('status', 'overdue')->count();
         if ($overdueInvoices > 0) {
             $alerts[] = [
                 'type' => 'danger',
                 'message' => "{$overdueInvoices} facturi restante (scadenta depasita).",
-                'href' => route('admin.invoices.index', ['status' => 'unpaid']),
+                'href' => route('admin.invoices.index', ['status' => 'overdue']),
             ];
         }
 
@@ -117,5 +123,13 @@ class DashboardController extends Controller
         }
 
         return $alerts;
+    }
+
+    private function markOverdueInvoices(): void
+    {
+        Invoice::where('status', 'unpaid')
+            ->whereNotNull('due_at')
+            ->whereDate('due_at', '<', today())
+            ->update(['status' => 'overdue']);
     }
 }

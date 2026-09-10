@@ -95,6 +95,25 @@ class ReportsAndDashboardTest extends TestCase
         );
     }
 
+    public function test_dashboard_exposes_professional_business_metrics(): void
+    {
+        $client = Client::factory()->create();
+        Offer::factory()->create(['client_id' => $client->id, 'status' => 'accepted', 'total_amount' => 2400]);
+        Installation::factory()->create(['client_id' => $client->id, 'status' => 'scheduled']);
+        Installation::factory()->create(['client_id' => $client->id, 'status' => 'completed']);
+        Invoice::factory()->create(['status' => 'overdue', 'amount' => 600]);
+
+        $this->actingAs($this->adminUser)
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn ($page) => $page
+                ->where('stats.acceptedValue', 2400)
+                ->where('stats.installationsActive', 1)
+                ->where('stats.installationsCompleted', 1)
+                ->where('stats.invoicesOverdue', 1)
+                ->where('stats.overdueAmount', 600)
+            );
+    }
+
     public function test_admin_can_accept_a_pending_offer_directly_from_the_dashboard(): void
     {
         $client = Client::factory()->create();

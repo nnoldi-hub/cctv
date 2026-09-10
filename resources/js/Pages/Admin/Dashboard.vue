@@ -87,12 +87,12 @@ function resolveTicket(ticket) {
                         <div class="text-3xl font-semibold text-gray-900">{{ stats.users }}</div>
                     </div>
                     <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg p-6">
-                        <div class="text-sm text-gray-500">Facturi neplatite</div>
-                        <div class="text-3xl font-semibold text-gray-900">{{ stats.invoicesUnpaid }}</div>
+                        <div class="text-sm text-gray-500">Instalari active</div>
+                        <div class="text-3xl font-semibold text-blue-600">{{ stats.installationsActive }}</div>
                     </div>
                     <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg p-6">
-                        <div class="text-sm text-gray-500">Venit incasat</div>
-                        <div class="text-3xl font-semibold text-gray-900">{{ money(stats.revenuePaid) }} RON</div>
+                        <div class="text-sm text-gray-500">Facturi restante</div>
+                        <div class="text-3xl font-semibold text-red-600">{{ stats.invoicesOverdue }}</div>
                     </div>
                 </div>
 
@@ -107,6 +107,11 @@ function resolveTicket(ticket) {
                         <div class="mt-1 text-xs text-slate-400">{{ stats.acceptedOffers }} acceptate</div>
                     </div>
                     <div class="rounded-lg bg-white p-6 shadow-sm">
+                        <div class="text-sm text-gray-500">Valoare oferte acceptate</div>
+                        <div class="text-2xl font-semibold text-green-600">{{ money(stats.acceptedValue) }} RON</div>
+                        <div class="mt-1 text-xs text-slate-400">{{ stats.installationsCompleted }} instalari finalizate</div>
+                    </div>
+                    <div class="rounded-lg bg-white p-6 shadow-sm">
                         <div class="text-sm text-gray-500">Pipeline comercial</div>
                         <div class="text-2xl font-semibold text-gray-900">{{ money(stats.pipelineValue) }} RON</div>
                         <div class="mt-1 text-xs text-slate-400">oferte draft si trimise</div>
@@ -114,7 +119,7 @@ function resolveTicket(ticket) {
                     <div class="rounded-lg bg-white p-6 shadow-sm">
                         <div class="text-sm text-gray-500">Incasari luna curenta</div>
                         <div class="text-2xl font-semibold text-green-600">{{ money(stats.revenueThisMonth) }} RON</div>
-                        <div class="mt-1 text-xs text-slate-400">total neincasat: {{ money(stats.unpaidAmount) }} RON</div>
+                        <div class="mt-1 text-xs text-slate-400">restant: {{ money(stats.overdueAmount) }} RON</div>
                     </div>
                 </div>
 
