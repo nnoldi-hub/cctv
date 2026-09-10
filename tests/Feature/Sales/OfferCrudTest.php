@@ -8,6 +8,7 @@ use App\Models\Installation;
 use App\Models\Offer;
 use App\Models\User;
 use App\Notifications\OfferSent;
+use App\Notifications\OfferStatusChanged;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -113,6 +114,70 @@ class OfferCrudTest extends TestCase
             ->patch(route('sales.offers.status', $offer), ['status' => 'sent']);
 
         Notification::assertSentOnDemand(OfferSent::class);
+    }
+
+    public function test_client_accepting_an_offer_notifies_the_offer_owner_and_creates_installation(): void
+    {
+        Notification::fake();
+
+        $clientUser = User::factory()->create();
+        $clientUser->assignRole('client');
+        $client = Client::factory()->create([
+            'user_id' => $clientUser->id,
+            'address' => 'Str. Testului 10',
+            'city' => 'Bucuresti',
+        ]);
+        $offer = Offer::factory()->create([
+            'client_id' => $client->id,
+            'user_id' => $this->salesUser->id,
+            'status' => 'sent',
+        ]);
+
+        $this->actingAs($clientUser)
+            ->patch(route('client.offers.status', $offer), [
+                'status' => 'accepted',
+                'message' => 'Putem programa instalarea.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('offers', ['id' => $offer->id, 'status' => 'accepted']);
+        $this->assertDatabaseHas('installations', [
+            'offer_id' => $offer->id,
+            'client_id' => $client->id,
+            'status' => 'scheduled',
+        ]);
+        Notification::assertSentTo($this->salesUser, OfferStatusChanged::class, function (OfferStatusChanged $notification): bool {
+            return $notification->status === 'accepted'
+                && $notification->message === 'Putem programa instalarea.';
+        });
+    }
+
+    public function test_client_rejecting_an_offer_notifies_the_offer_owner_without_creating_installation(): void
+    {
+        Notification::fake();
+
+        $clientUser = User::factory()->create();
+        $clientUser->assignRole('client');
+        $client = Client::factory()->create(['user_id' => $clientUser->id]);
+        $offer = Offer::factory()->create([
+            'client_id' => $client->id,
+            'user_id' => $this->salesUser->id,
+            'status' => 'sent',
+        ]);
+
+        $this->actingAs($clientUser)
+            ->patch(route('client.offers.status', $offer), [
+                'status' => 'rejected',
+                'message' => 'Vom reveni cu o decizie.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('offers', ['id' => $offer->id, 'status' => 'rejected']);
+        $this->assertDatabaseCount('installations', 0);
+        Notification::assertSentTo($this->salesUser, OfferStatusChanged::class, function (OfferStatusChanged $notification): bool {
+            return $notification->status === 'rejected'
+                && $notification->message === 'Vom reveni cu o decizie.';
+        });
     }
 
     public function test_offer_pdf_can_be_downloaded(): void
