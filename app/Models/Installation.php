@@ -85,6 +85,16 @@ class Installation extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    public function getActualExpenseTotalAttribute(): float
+    {
+        return round((float) $this->expenses()->sum('amount'), 2);
+    }
+
     public static function defaultChecklist(): array
     {
         return collect(self::CHECKLIST_TEMPLATE)
@@ -116,14 +126,17 @@ class Installation extends Model
         );
         $offerValue = (float) ($this->offer?->total_amount ?? 0);
         $totalCost = $materialCost + $laborCost;
+        $actualExpenses = (float) $this->expenses()->sum('amount');
 
         return [
             'offer_value' => round($offerValue, 2),
             'material_cost' => round($materialCost, 2),
             'labor_cost' => round($laborCost, 2),
             'total_cost' => round($totalCost, 2),
+            'actual_expenses' => round($actualExpenses, 2),
+            'actual_total_cost' => round($totalCost + $actualExpenses, 2),
             'estimated_profit' => round($offerValue - $totalCost, 2),
-            'final_profit' => $this->status === 'completed' ? round($offerValue - $totalCost, 2) : null,
+            'final_profit' => $this->status === 'completed' ? round($offerValue - $totalCost - $actualExpenses, 2) : null,
         ];
     }
 }

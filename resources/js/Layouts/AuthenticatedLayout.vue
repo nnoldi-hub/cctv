@@ -51,6 +51,7 @@ const sections = [
         items: [
             { name: 'Utilizatori', route: 'admin.users.index', icon: 'users' },
             { name: 'Facturi', route: 'admin.invoices.index', icon: 'file-text' },
+            { name: 'Cheltuieli si achizitii', route: 'admin.expenses.index', icon: 'shopping-cart' },
             { name: 'Abonamente', route: 'admin.subscriptions.index', icon: 'credit-card' },
             { name: 'KPI / Rapoarte', route: 'admin.reports', icon: 'bar-chart' },
             { name: 'Log SMS', route: 'admin.sms-logs', icon: 'message-square' },

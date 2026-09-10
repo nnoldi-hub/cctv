@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\StatController;
 use App\Http\Controllers\Admin\BlogPostController;
@@ -18,6 +19,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/', DashboardController::class)->name('dashboard');
 
     Route::get('/rapoarte', ReportController::class)->name('reports');
+    Route::resource('cheltuieli', ExpenseController::class)->only(['index', 'create', 'store', 'destroy'])->parameters(['cheltuieli' => 'expense'])->names('expenses');
     Route::get('/sms-log', SmsLogController::class)->name('sms-logs');
     Route::get('/audit-log', AuditLogController::class)->name('audit-logs');
 
