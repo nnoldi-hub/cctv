@@ -19,7 +19,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/', DashboardController::class)->name('dashboard');
 
     Route::get('/rapoarte', ReportController::class)->name('reports');
-    Route::resource('cheltuieli', ExpenseController::class)->only(['index', 'create', 'store', 'destroy'])->parameters(['cheltuieli' => 'expense'])->names('expenses');
+    Route::resource('cheltuieli', ExpenseController::class)->except(['show'])->parameters(['cheltuieli' => 'expense'])->names('expenses');
     Route::get('/sms-log', SmsLogController::class)->name('sms-logs');
     Route::get('/audit-log', AuditLogController::class)->name('audit-logs');
 

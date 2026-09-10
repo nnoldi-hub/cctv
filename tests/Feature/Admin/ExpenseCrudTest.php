@@ -56,4 +56,25 @@ class ExpenseCrudTest extends TestCase
 
         $this->actingAs($sales)->get(route('admin.expenses.index'))->assertForbidden();
     }
+
+    public function test_admin_can_edit_expense(): void
+    {
+        $expense = Expense::create([
+            'description' => 'Cost initial',
+            'category' => 'other',
+            'amount' => 100,
+            'expense_date' => '2026-09-10',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.expenses.update', $expense), [
+                'description' => 'Transport actualizat',
+                'category' => 'transport',
+                'amount' => 150,
+                'expense_date' => '2026-09-11',
+            ])
+            ->assertRedirect(route('admin.expenses.index'));
+
+        $this->assertDatabaseHas('expenses', ['id' => $expense->id, 'description' => 'Transport actualizat', 'amount' => 150]);
+    }
 }

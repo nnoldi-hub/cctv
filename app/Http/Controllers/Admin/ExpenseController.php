@@ -40,9 +40,32 @@ class ExpenseController extends Controller
         ]);
     }
 
+    public function edit(Expense $expense): Response
+    {
+        return Inertia::render('Admin/Expenses/Edit', [
+            'expense' => $expense,
+            'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
+            'installations' => Installation::with('client:id,name')->latest()->get(['id', 'client_id', 'report_number']),
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
-        Expense::create($request->validate([
+        Expense::create($this->validateData($request));
+
+        return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost inregistrata.');
+    }
+
+    public function update(Request $request, Expense $expense): RedirectResponse
+    {
+        $expense->update($this->validateData($request));
+
+        return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost actualizata.');
+    }
+
+    private function validateData(Request $request): array
+    {
+        return $request->validate([
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'installation_id' => ['nullable', 'exists:installations,id'],
             'description' => ['required', 'string', 'max:255'],
@@ -51,9 +74,7 @@ class ExpenseController extends Controller
             'expense_date' => ['required', 'date'],
             'document_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
-        ]));
-
-        return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost inregistrata.');
+        ]);
     }
 
     public function destroy(Expense $expense): RedirectResponse
