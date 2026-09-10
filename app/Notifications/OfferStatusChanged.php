@@ -34,17 +34,15 @@ class OfferStatusChanged extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $mail = (new MailMessage)
+        return (new MailMessage)
             ->subject('Raspuns client la oferta #'.$this->offer->id)
-            ->greeting('Buna, '.$notifiable->name.'!')
-            ->line('Clientul a '.($this->status === 'accepted' ? 'acceptat' : 'respins').' oferta „'.$this->offer->title.'”.')
-            ->action('Vezi oferta', route('sales.offers.show', $this->offer))
-            ->salutation('Cu stima, CCTV Security');
-
-        if ($this->message) {
-            $mail->line('Mesaj client: '.$this->message);
-        }
-
-        return $mail;
+            ->view('emails.offer-status-changed', [
+                'recipientName' => $notifiable->name,
+                'offer' => $this->offer,
+                'status' => $this->status,
+                'clientMessage' => $this->message,
+                'offerUrl' => route('sales.offers.show', $this->offer),
+                'logoUrl' => asset('branding/logo-cctv.png'),
+            ]);
     }
 }
