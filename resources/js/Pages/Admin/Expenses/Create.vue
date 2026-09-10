@@ -6,8 +6,9 @@ const props = defineProps({ suppliers: Array, installations: Array });
 const form = useForm({
     supplier_id: '', installation_id: '', description: '', category: 'material',
     amount: 0, expense_date: new Date().toISOString().slice(0, 10), document_number: '', notes: '',
+    document: null,
 });
-function submit() { form.post(route('admin.expenses.store')); }
+function submit() { form.post(route('admin.expenses.store'), { forceFormData: true }); }
 </script>
 
 <template>
@@ -30,6 +31,7 @@ function submit() { form.post(route('admin.expenses.store')); }
                         <div><label class="block text-sm font-medium text-slate-700">Lucrare / instalare</label><select v-model="form.installation_id" class="mt-1 block w-full rounded-md border-slate-300"><option value="">Cheltuiala generala</option><option v-for="installation in props.installations" :key="installation.id" :value="installation.id">{{ installation.report_number || `Instalare #${installation.id}` }} - {{ installation.client?.name }}</option></select></div>
                         <div><label class="block text-sm font-medium text-slate-700">Data *</label><input v-model="form.expense_date" required type="date" class="mt-1 block w-full rounded-md border-slate-300" /></div>
                         <div><label class="block text-sm font-medium text-slate-700">Nr. document</label><input v-model="form.document_number" class="mt-1 block w-full rounded-md border-slate-300" placeholder="Factura furnizor" /></div>
+                        <div class="sm:col-span-2"><label class="block text-sm font-medium text-slate-700">Document justificativ</label><input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" class="mt-1 block w-full rounded-md border-slate-300 p-2 text-sm" @input="form.document = $event.target.files[0]" /><p class="mt-1 text-xs text-slate-500">Factura sau bon, maximum 10 MB.</p></div>
                         <div class="sm:col-span-2"><label class="block text-sm font-medium text-slate-700">Note</label><textarea v-model="form.notes" rows="3" class="mt-1 block w-full rounded-md border-slate-300" /></div>
                     </div>
                     <button :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Salveaza cheltuiala</button>

@@ -8,6 +8,8 @@ use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ExpenseCrudTest extends TestCase
@@ -76,5 +78,24 @@ class ExpenseCrudTest extends TestCase
             ->assertRedirect(route('admin.expenses.index'));
 
         $this->assertDatabaseHas('expenses', ['id' => $expense->id, 'description' => 'Transport actualizat', 'amount' => 150]);
+    }
+
+    public function test_admin_can_upload_expense_document(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.expenses.store'), [
+                'description' => 'Factura furnizor',
+                'category' => 'material',
+                'amount' => 450,
+                'expense_date' => '2026-09-10',
+                'document' => UploadedFile::fake()->create('factura.pdf', 100, 'application/pdf'),
+            ])
+            ->assertRedirect(route('admin.expenses.index'));
+
+        $expense = Expense::first();
+        $this->assertNotNull($expense->document_path);
+        Storage::disk('public')->assertExists($expense->document_path);
     }
 }

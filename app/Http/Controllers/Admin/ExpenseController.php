@@ -8,6 +8,7 @@ use App\Models\Installation;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,7 +52,8 @@ class ExpenseController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Expense::create($this->validateData($request));
+        $expense = Expense::create($this->validateData($request));
+        $this->storeDocument($request, $expense);
 
         return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost inregistrata.');
     }
@@ -59,6 +61,7 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense): RedirectResponse
     {
         $expense->update($this->validateData($request));
+        $this->storeDocument($request, $expense);
 
         return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost actualizata.');
     }
@@ -74,13 +77,32 @@ class ExpenseController extends Controller
             'expense_date' => ['required', 'date'],
             'document_number' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
         ]);
     }
 
     public function destroy(Expense $expense): RedirectResponse
     {
+        if ($expense->document_path) {
+            Storage::disk('public')->delete($expense->document_path);
+        }
         $expense->delete();
 
         return back()->with('success', 'Cheltuiala a fost stearsa.');
+    }
+
+    private function storeDocument(Request $request, Expense $expense): void
+    {
+        if (! $request->hasFile('document')) {
+            return;
+        }
+
+        if ($expense->document_path) {
+            Storage::disk('public')->delete($expense->document_path);
+        }
+
+        $expense->update([
+            'document_path' => $request->file('document')->store('expense-documents', 'public'),
+        ]);
     }
 }
