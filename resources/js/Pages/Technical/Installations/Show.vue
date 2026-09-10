@@ -102,9 +102,18 @@ function money(value) {
                         <div><dt class="text-slate-400">Cost materiale</dt><dd class="text-slate-900">{{ money(installation.cost_report.material_cost) }} lei</dd></div>
                         <div><dt class="text-slate-400">Cost manopera</dt><dd class="text-slate-900">{{ money(installation.cost_report.labor_cost) }} lei</dd></div>
                         <div><dt class="text-slate-400">Cost total</dt><dd class="font-semibold text-slate-900">{{ money(installation.cost_report.total_cost) }} lei</dd></div>
+                        <div><dt class="text-slate-400">Cheltuieli reale</dt><dd class="font-semibold text-orange-700">{{ money(installation.cost_report.actual_expenses) }} lei</dd></div>
+                        <div><dt class="text-slate-400">Cost real total</dt><dd class="font-semibold text-slate-900">{{ money(installation.cost_report.actual_total_cost) }} lei</dd></div>
                         <div><dt class="text-slate-400">Profit estimat</dt><dd class="font-semibold text-blue-700">{{ money(installation.cost_report.estimated_profit) }} lei</dd></div>
-                        <div v-if="installation.cost_report.final_profit !== null"><dt class="text-slate-400">Profit final</dt><dd class="font-semibold text-green-700">{{ money(installation.cost_report.final_profit) }} lei</dd></div>
+                        <div v-if="installation.cost_report.final_profit !== null"><dt class="text-slate-400">Profit final real</dt><dd class="font-semibold" :class="installation.cost_report.final_profit >= 0 ? 'text-green-700' : 'text-red-700'">{{ money(installation.cost_report.final_profit) }} lei</dd></div>
                     </dl>
+                    <div v-if="installation.expenses?.length" class="mt-5 border-t border-slate-100 pt-4">
+                        <h4 class="text-xs font-semibold uppercase tracking-wide text-slate-400">Cheltuieli asociate</h4>
+                        <div v-for="expense in installation.expenses" :key="expense.id" class="mt-2 flex justify-between text-sm">
+                            <span>{{ expense.description }} <span class="text-slate-400">({{ expense.supplier?.name || 'fara furnizor' }})</span></span>
+                            <strong>{{ money(expense.amount) }} lei</strong>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>

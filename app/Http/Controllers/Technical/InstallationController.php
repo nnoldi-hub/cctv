@@ -182,7 +182,7 @@ class InstallationController extends Controller
 
     public function pdf(Installation $installation): HttpResponse
     {
-        $installation->load(['client', 'offer', 'technician:id,name']);
+        $installation->load(['client', 'offer', 'technician:id,name', 'expenses.supplier:id,name']);
 
         return Pdf::loadView('pdfs.installation-report', [
             'installation' => $installation,

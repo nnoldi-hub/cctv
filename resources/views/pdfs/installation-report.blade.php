@@ -124,9 +124,11 @@
             <tr><td><strong>Cost materiale:</strong></td><td>{{ number_format($installation->cost_report['material_cost'], 2, ',', '.') }} lei</td></tr>
             <tr><td><strong>Cost manopera:</strong></td><td>{{ number_format($installation->cost_report['labor_cost'], 2, ',', '.') }} lei</td></tr>
             <tr><td><strong>Cost total:</strong></td><td>{{ number_format($installation->cost_report['total_cost'], 2, ',', '.') }} lei</td></tr>
+            <tr><td><strong>Cheltuieli reale:</strong></td><td>{{ number_format($installation->cost_report['actual_expenses'], 2, ',', '.') }} lei</td></tr>
+            <tr><td><strong>Cost real total:</strong></td><td>{{ number_format($installation->cost_report['actual_total_cost'], 2, ',', '.') }} lei</td></tr>
             <tr><td><strong>Profit estimat:</strong></td><td>{{ number_format($installation->cost_report['estimated_profit'], 2, ',', '.') }} lei</td></tr>
             @if ($installation->cost_report['final_profit'] !== null)
-                <tr><td><strong>Profit final:</strong></td><td>{{ number_format($installation->cost_report['final_profit'], 2, ',', '.') }} lei</td></tr>
+                <tr><td><strong>Profit final real:</strong></td><td>{{ number_format($installation->cost_report['final_profit'], 2, ',', '.') }} lei</td></tr>
             @endif
         </table>
     </div>
