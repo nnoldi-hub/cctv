@@ -3,6 +3,7 @@
 namespace Tests\Feature\Technical;
 
 use App\Models\Client;
+use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Invoice;
 use App\Models\Offer;
@@ -109,6 +110,46 @@ class InstallationCrudTest extends TestCase
             ->patch(route('technical.installations.status', $installation), ['status' => 'completed']);
 
         $this->assertDatabaseCount('invoices', 0);
+    }
+
+    public function test_completing_an_installation_consumes_selected_stock_once(): void
+    {
+        $equipment = Equipment::factory()->create(['stock_quantity' => 10, 'name' => 'Camera IP']);
+        $installation = Installation::factory()->create([
+            'status' => 'in_progress',
+            'material_items' => [['equipment_id' => $equipment->id, 'quantity' => 3]],
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->patch(route('technical.installations.status', $installation), ['status' => 'completed'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('equipment', ['id' => $equipment->id, 'stock_quantity' => 7]);
+        $installation->refresh();
+        $this->assertNotNull($installation->stock_consumed_at);
+
+        $this->actingAs($this->techUser)
+            ->patch(route('technical.installations.status', $installation), ['status' => 'in_progress']);
+        $this->actingAs($this->techUser)
+            ->patch(route('technical.installations.status', $installation), ['status' => 'completed']);
+
+        $this->assertDatabaseHas('equipment', ['id' => $equipment->id, 'stock_quantity' => 7]);
+    }
+
+    public function test_installation_completion_fails_without_changing_stock_when_stock_is_insufficient(): void
+    {
+        $equipment = Equipment::factory()->create(['stock_quantity' => 1, 'name' => 'NVR']);
+        $installation = Installation::factory()->create([
+            'status' => 'in_progress',
+            'material_items' => [['equipment_id' => $equipment->id, 'quantity' => 2]],
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->patch(route('technical.installations.status', $installation), ['status' => 'completed'])
+            ->assertSessionHasErrors('material_items');
+
+        $this->assertDatabaseHas('equipment', ['id' => $equipment->id, 'stock_quantity' => 1]);
+        $this->assertDatabaseHas('installations', ['id' => $installation->id, 'status' => 'in_progress']);
     }
 
     public function test_completing_an_installation_twice_does_not_duplicate_the_invoice(): void

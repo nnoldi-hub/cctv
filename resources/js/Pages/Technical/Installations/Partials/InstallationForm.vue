@@ -6,6 +6,7 @@ const props = defineProps({
     clients: Array,
     offers: Array,
     technicians: Array,
+    equipment: Array,
 });
 
 const filteredOffers = computed(() => props.offers.filter((o) => o.client_id === props.form.client_id));
@@ -15,6 +16,14 @@ function useClientAddress() {
     if (client && !props.form.address) {
         props.form.address = [client.address, client.city].filter(Boolean).join(', ');
     }
+}
+
+function addMaterial() {
+    props.form.material_items.push({ equipment_id: null, quantity: 1 });
+}
+
+function removeMaterial(index) {
+    props.form.material_items.splice(index, 1);
 }
 </script>
 
@@ -48,6 +57,21 @@ function useClientAddress() {
                 <option :value="null">Neasignat</option>
                 <option v-for="tech in technicians" :key="tech.id" :value="tech.id">{{ tech.name }}</option>
             </select>
+        </div>
+        <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-slate-700">Materiale din stoc</label>
+            <div v-for="(item, index) in form.material_items" :key="index" class="mt-2 flex gap-2">
+                <select v-model.number="item.equipment_id" class="block min-w-0 flex-1 rounded-md border-slate-300 shadow-sm">
+                    <option :value="null" disabled>Selecteaza material</option>
+                    <option v-for="stockItem in equipment" :key="stockItem.id" :value="stockItem.id">
+                        {{ stockItem.name }} ({{ stockItem.stock_quantity }} {{ stockItem.unit }} disponibile)
+                    </option>
+                </select>
+                <input v-model.number="item.quantity" type="number" min="1" class="w-24 rounded-md border-slate-300 shadow-sm" />
+                <button type="button" class="rounded-md border border-red-200 px-3 text-red-600" @click="removeMaterial(index)">Sterge</button>
+            </div>
+            <button type="button" class="mt-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600" @click="addMaterial">+ Adauga material din stoc</button>
+            <p class="mt-1 text-xs text-slate-400">Stocul se scade o singura data cand instalarea este marcata finalizata.</p>
         </div>
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-slate-700">Adresa</label>

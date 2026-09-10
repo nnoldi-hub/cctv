@@ -35,6 +35,8 @@ class Installation extends Model
         'notes',
         'checklist',
         'materials',
+        'material_items',
+        'stock_consumed_at',
         'photos',
         'customer_name',
         'customer_notes',
@@ -52,9 +54,11 @@ class Installation extends Model
         'longitude' => 'decimal:7',
         'checklist' => 'array',
         'materials' => 'array',
+        'material_items' => 'array',
         'photos' => 'array',
         'completed_at' => 'datetime',
         'handover_at' => 'datetime',
+        'stock_consumed_at' => 'datetime',
     ];
 
     public function client(): BelongsTo

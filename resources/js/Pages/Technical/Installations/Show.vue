@@ -176,6 +176,16 @@ const checklistProgress = computed(() => {
                             <div><dt class="text-slate-400">Client la receptie</dt><dd class="text-slate-900">{{ installation.customer_name ?? '-' }}</dd></div>
                             <div><dt class="text-slate-400">Data receptiei</dt><dd class="text-slate-900">{{ installation.handover_at ? new Date(installation.handover_at).toLocaleString('ro-RO') : '-' }}</dd></div>
                             <div class="sm:col-span-2"><dt class="text-slate-400">Materiale consumate</dt><dd class="whitespace-pre-line text-slate-900">{{ installation.materials?.join('\n') || '-' }}</dd></div>
+                            <div v-if="installation.material_items?.length" class="sm:col-span-2">
+                                <dt class="text-slate-400">Materiale scazute din stoc</dt>
+                                <dd class="text-slate-900">
+                                    <ul class="mt-1 list-disc pl-5">
+                                        <li v-for="item in installation.material_items" :key="`${item.equipment_id}-${item.name}`">
+                                            {{ item.name }} — {{ item.quantity }} {{ item.unit }}
+                                        </li>
+                                    </ul>
+                                </dd>
+                            </div>
                             <div class="sm:col-span-2"><dt class="text-slate-400">Observatii client</dt><dd class="whitespace-pre-line text-slate-900">{{ installation.customer_notes || '-' }}</dd></div>
                         </dl>
                         <div v-if="installation.technician_signature || installation.customer_signature" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">

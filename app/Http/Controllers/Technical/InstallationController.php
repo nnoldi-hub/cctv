@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Technical;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Invoice;
 use App\Models\Offer;
@@ -13,6 +14,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +36,7 @@ class InstallationController extends Controller
             'installations' => $installations,
             'filters' => $request->only('status', 'type', 'technician_id'),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
+            'equipment' => Equipment::where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
         ]);
     }
 
@@ -42,6 +46,7 @@ class InstallationController extends Controller
             'clients' => Client::orderBy('name')->get(['id', 'name', 'address', 'city']),
             'offers' => Offer::with('client:id,name')->where('status', 'accepted')->get(['id', 'client_id', 'title']),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
+            'equipment' => Equipment::where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
             'preselectedClientId' => $request->integer('client_id') ?: null,
         ]);
     }
@@ -52,11 +57,14 @@ class InstallationController extends Controller
         $data['checklist'] = Installation::defaultChecklist();
         $data = $this->processExecutionDetails($request, $data);
 
-        $installation = Installation::create($data);
-
-        if ($installation->status === 'completed') {
-            $this->markCompleted($installation);
-        }
+        $installation = DB::transaction(function () use ($data) {
+            $installation = Installation::create($data);
+            if ($installation->status === 'completed') {
+                $this->markCompleted($installation);
+                $this->consumeMaterialsFromStock($installation);
+            }
+            return $installation;
+        });
 
         return redirect()->route('technical.installations.show', $installation)->with('success', 'Programare creata.');
     }
@@ -77,17 +85,20 @@ class InstallationController extends Controller
             'clients' => Client::orderBy('name')->get(['id', 'name', 'address', 'city']),
             'offers' => Offer::with('client:id,name')->where('status', 'accepted')->get(['id', 'client_id', 'title']),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
+            'equipment' => Equipment::orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
         ]);
     }
 
     public function update(Request $request, Installation $installation): RedirectResponse
     {
         $data = $this->processExecutionDetails($request, $this->validateData($request), $installation);
-        $installation->update($data);
-
-        if ($installation->status === 'completed') {
-            $this->markCompleted($installation);
-        }
+        DB::transaction(function () use ($data, $installation) {
+            $installation->update($data);
+            if ($installation->status === 'completed') {
+                $this->markCompleted($installation);
+                $this->consumeMaterialsFromStock($installation);
+            }
+        });
 
         return redirect()->route('technical.installations.show', $installation)->with('success', 'Programare actualizata.');
     }
@@ -98,12 +109,14 @@ class InstallationController extends Controller
             'status' => ['required', 'in:scheduled,in_progress,completed,cancelled'],
         ]);
 
-        $installation->update($data);
-
-        if ($data['status'] === 'completed') {
-            $this->markCompleted($installation);
-            $this->createInvoiceFromCompletedInstallation($installation);
-        }
+        DB::transaction(function () use ($data, $installation) {
+            $installation->update($data);
+            if ($data['status'] === 'completed') {
+                $this->markCompleted($installation);
+                $this->consumeMaterialsFromStock($installation);
+                $this->createInvoiceFromCompletedInstallation($installation);
+            }
+        });
 
         return back()->with('success', 'Status actualizat.');
     }
@@ -177,6 +190,9 @@ class InstallationController extends Controller
             'status' => ['required', 'in:scheduled,in_progress,completed,cancelled'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'materials' => ['nullable', 'string', 'max:5000'],
+            'material_items' => ['nullable', 'array'],
+            'material_items.*.equipment_id' => ['required', 'integer', 'exists:equipment,id'],
+            'material_items.*.quantity' => ['required', 'integer', 'min:1', 'max:9999'],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_notes' => ['nullable', 'string', 'max:2000'],
             'photos.*' => ['nullable', 'image', 'max:5120'],
@@ -192,6 +208,19 @@ class InstallationController extends Controller
             'trim',
             preg_split('/\r\n|\r|\n/', $data['materials'] ?? '')
         )));
+        $data['material_items'] = collect($data['material_items'] ?? [])
+            ->map(function (array $item): array {
+                $equipment = Equipment::findOrFail($item['equipment_id']);
+
+                return [
+                    'equipment_id' => $equipment->id,
+                    'name' => $equipment->name,
+                    'unit' => $equipment->unit,
+                    'quantity' => (int) $item['quantity'],
+                ];
+            })
+            ->values()
+            ->all();
         unset($data['photos']);
 
         $photos = [];
@@ -223,5 +252,31 @@ class InstallationController extends Controller
             'handover_at' => $installation->handover_at ?? now(),
             'report_number' => $installation->report_number ?? 'PV-'.now()->format('Y').'-'.str_pad((string) $installation->id, 5, '0', STR_PAD_LEFT),
         ]);
+    }
+
+    private function consumeMaterialsFromStock(Installation $installation): void
+    {
+        if ($installation->stock_consumed_at || empty($installation->material_items)) {
+            return;
+        }
+
+        $quantities = collect($installation->material_items)
+            ->groupBy('equipment_id')
+            ->map(fn ($items) => $items->sum('quantity'));
+
+        foreach ($quantities as $equipmentId => $quantity) {
+            $equipment = Equipment::query()->lockForUpdate()->findOrFail($equipmentId);
+            if ($equipment->stock_quantity < $quantity) {
+                throw ValidationException::withMessages([
+                    'material_items' => "Stoc insuficient pentru {$equipment->name}. Disponibil: {$equipment->stock_quantity}.",
+                ]);
+            }
+        }
+
+        foreach ($quantities as $equipmentId => $quantity) {
+            Equipment::query()->whereKey($equipmentId)->decrement('stock_quantity', $quantity);
+        }
+
+        $installation->update(['stock_consumed_at' => now()]);
     }
 }

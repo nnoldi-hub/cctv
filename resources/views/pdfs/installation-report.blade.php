@@ -76,6 +76,15 @@
         </div>
     @endif
 
+    @if (!empty($installation->material_items))
+        <div class="section">
+            <strong>Materiale consumate din stoc</strong>
+            @foreach ($installation->material_items as $item)
+                <div class="checklist-item">{{ $item['name'] ?? 'Material' }}: {{ $item['quantity'] }} {{ $item['unit'] ?? 'buc' }}</div>
+            @endforeach
+        </div>
+    @endif
+
     @if ($installation->customer_name || $installation->customer_notes)
         <div class="section">
             <strong>Confirmare client</strong>
