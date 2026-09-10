@@ -23,6 +23,16 @@ const statusClasses = {
     cancelled: 'bg-red-100 text-red-700',
 };
 
+const isFinalized = computed(() => installationIsFinalized(props.installation));
+
+function installationIsFinalized(installation) {
+    return installation.status === 'completed'
+        || installation.completed_at
+        || installation.handover_at
+        || installation.report_number
+        || installation.stock_consumed_at;
+}
+
 const mapQuery = computed(() => {
     if (props.installation.latitude && props.installation.longitude) {
         return `${props.installation.latitude},${props.installation.longitude}`;
@@ -42,6 +52,7 @@ const mapLink = computed(() => mapQuery.value
     : null);
 
 function setStatus(status) {
+    if (isFinalized.value && status !== 'completed') return;
     router.patch(route('technical.installations.status', props.installation.id), { status }, { preserveScroll: true });
 }
 
@@ -60,6 +71,10 @@ const checklistProgress = computed(() => {
     const done = props.installation.checklist.filter((i) => i.done).length;
     return Math.round((done / props.installation.checklist.length) * 100);
 });
+
+function money(value) {
+    return Number(value ?? 0).toLocaleString('ro-RO', { minimumFractionDigits: 2 });
+}
 </script>
 
 <template>
@@ -75,9 +90,21 @@ const checklistProgress = computed(() => {
                     <a :href="route('technical.installations.pdf', installation.id)" target="_blank" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                         Raport PDF
                     </a>
-                    <Link :href="route('technical.installations.edit', installation.id)" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    <Link v-if="!isFinalized" :href="route('technical.installations.edit', installation.id)" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                         Editeaza
                     </Link>
+                </div>
+
+                <div class="rounded-lg bg-white p-6 shadow-sm">
+                    <h3 class="text-sm font-semibold text-slate-500">Costuri si profit</h3>
+                    <dl class="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
+                        <div><dt class="text-slate-400">Valoare oferta</dt><dd class="font-semibold text-slate-900">{{ money(installation.cost_report.offer_value) }} lei</dd></div>
+                        <div><dt class="text-slate-400">Cost materiale</dt><dd class="text-slate-900">{{ money(installation.cost_report.material_cost) }} lei</dd></div>
+                        <div><dt class="text-slate-400">Cost manopera</dt><dd class="text-slate-900">{{ money(installation.cost_report.labor_cost) }} lei</dd></div>
+                        <div><dt class="text-slate-400">Cost total</dt><dd class="font-semibold text-slate-900">{{ money(installation.cost_report.total_cost) }} lei</dd></div>
+                        <div><dt class="text-slate-400">Profit estimat</dt><dd class="font-semibold text-blue-700">{{ money(installation.cost_report.estimated_profit) }} lei</dd></div>
+                        <div v-if="installation.cost_report.final_profit !== null"><dt class="text-slate-400">Profit final</dt><dd class="font-semibold text-green-700">{{ money(installation.cost_report.final_profit) }} lei</dd></div>
+                    </dl>
                 </div>
             </div>
         </template>
@@ -127,7 +154,7 @@ const checklistProgress = computed(() => {
                             <button
                                 v-for="option in statusOptions"
                                 :key="option.value"
-                                :disabled="installation.status === option.value"
+                                :disabled="installation.status === option.value || (isFinalized && option.value !== 'completed')"
                                 class="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                 @click="setStatus(option.value)"
                             >
@@ -181,6 +208,16 @@ const checklistProgress = computed(() => {
                                 <dd class="text-slate-900">
                                     <ul class="mt-1 list-disc pl-5">
                                         <li v-for="item in installation.material_items" :key="`${item.equipment_id}-${item.name}`">
+                                            {{ item.name }} — {{ item.quantity }} {{ item.unit }}
+                                        </li>
+                                    </ul>
+                                </dd>
+                            </div>
+                            <div v-if="installation.service_items?.length" class="sm:col-span-2">
+                                <dt class="text-slate-400">Servicii / manopera planificata</dt>
+                                <dd class="text-slate-900">
+                                    <ul class="mt-1 list-disc pl-5">
+                                        <li v-for="item in installation.service_items" :key="`${item.service_id}-${item.name}`">
                                             {{ item.name }} — {{ item.quantity }} {{ item.unit }}
                                         </li>
                                     </ul>

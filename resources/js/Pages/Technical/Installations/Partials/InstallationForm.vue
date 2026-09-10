@@ -7,6 +7,7 @@ const props = defineProps({
     offers: Array,
     technicians: Array,
     equipment: Array,
+    services: Array,
 });
 
 const filteredOffers = computed(() => props.offers.filter((o) => o.client_id === props.form.client_id));
@@ -24,6 +25,14 @@ function addMaterial() {
 
 function removeMaterial(index) {
     props.form.material_items.splice(index, 1);
+}
+
+function addService() {
+    props.form.service_items.push({ service_id: null, quantity: 1 });
+}
+
+function removeService(index) {
+    props.form.service_items.splice(index, 1);
 }
 </script>
 
@@ -69,6 +78,18 @@ function removeMaterial(index) {
                 </select>
                 <input v-model.number="item.quantity" type="number" min="1" class="w-24 rounded-md border-slate-300 shadow-sm" />
                 <button type="button" class="rounded-md border border-red-200 px-3 text-red-600" @click="removeMaterial(index)">Sterge</button>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Servicii / manopera planificata</label>
+                <div v-for="(item, index) in form.service_items" :key="index" class="mt-2 flex gap-2">
+                    <select v-model.number="item.service_id" class="block min-w-0 flex-1 rounded-md border-slate-300 shadow-sm">
+                        <option :value="null" disabled>Selecteaza serviciu</option>
+                        <option v-for="service in services" :key="service.id" :value="service.id">{{ service.name }} ({{ service.unit }})</option>
+                    </select>
+                    <input v-model.number="item.quantity" type="number" min="1" class="w-24 rounded-md border-slate-300 shadow-sm" />
+                    <button type="button" class="rounded-md border border-red-200 px-3 text-red-600" @click="removeService(index)">Sterge</button>
+                </div>
+                <button type="button" class="mt-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600" @click="addService">+ Adauga serviciu</button>
             </div>
             <button type="button" class="mt-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600" @click="addMaterial">+ Adauga material din stoc</button>
             <p class="mt-1 text-xs text-slate-400">Stocul se scade o singura data cand instalarea este marcata finalizata.</p>

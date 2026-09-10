@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Offer;
+use App\Models\Service;
 use App\Models\User;
 use App\Notifications\OfferSent;
 use App\Notifications\OfferStatusChanged;
@@ -88,6 +89,36 @@ class OfferCrudTest extends TestCase
         $this->assertNotNull($installation);
         $this->assertEquals('scheduled', $installation->status);
         $this->assertStringContainsString('Lalelelor', $installation->address);
+    }
+
+    public function test_accepting_an_offer_imports_materials_and_services_into_installation(): void
+    {
+        $client = Client::factory()->create();
+        $equipment = Equipment::factory()->create(['name' => 'Camera IP', 'unit' => 'buc']);
+        $service = Service::create(['name' => 'Montaj camera', 'unit' => 'serviciu']);
+        $offer = Offer::factory()->create([
+            'client_id' => $client->id,
+            'user_id' => $this->salesUser->id,
+            'status' => 'sent',
+        ]);
+        $offer->items()->create([
+            'equipment_id' => $equipment->id,
+            'description' => $equipment->name,
+            'quantity' => 4,
+        ]);
+        $offer->items()->create([
+            'service_id' => $service->id,
+            'description' => $service->name,
+            'quantity' => 1,
+        ]);
+
+        $this->actingAs($this->salesUser)
+            ->patch(route('sales.offers.status', $offer), ['status' => 'accepted']);
+
+        $installation = Installation::firstWhere('offer_id', $offer->id);
+        $this->assertSame(4, $installation->material_items[0]['quantity']);
+        $this->assertSame($equipment->id, $installation->material_items[0]['equipment_id']);
+        $this->assertSame($service->id, $installation->service_items[0]['service_id']);
     }
 
     public function test_accepting_an_offer_twice_does_not_create_duplicate_installations(): void

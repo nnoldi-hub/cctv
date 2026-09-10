@@ -85,6 +85,29 @@
         </div>
     @endif
 
+    @if (!empty($installation->service_items))
+        <div class="section">
+            <strong>Servicii / manopera planificata</strong>
+            @foreach ($installation->service_items as $item)
+                <div class="checklist-item">{{ $item['name'] ?? 'Serviciu' }}: {{ $item['quantity'] }} {{ $item['unit'] ?? 'serviciu' }}</div>
+            @endforeach
+        </div>
+    @endif
+
+    <div class="section">
+        <strong>Raport costuri si profit</strong>
+        <table>
+            <tr><td style="width: 30%;"><strong>Valoare oferta:</strong></td><td>{{ number_format($installation->cost_report['offer_value'], 2, ',', '.') }} lei</td></tr>
+            <tr><td><strong>Cost materiale:</strong></td><td>{{ number_format($installation->cost_report['material_cost'], 2, ',', '.') }} lei</td></tr>
+            <tr><td><strong>Cost manopera:</strong></td><td>{{ number_format($installation->cost_report['labor_cost'], 2, ',', '.') }} lei</td></tr>
+            <tr><td><strong>Cost total:</strong></td><td>{{ number_format($installation->cost_report['total_cost'], 2, ',', '.') }} lei</td></tr>
+            <tr><td><strong>Profit estimat:</strong></td><td>{{ number_format($installation->cost_report['estimated_profit'], 2, ',', '.') }} lei</td></tr>
+            @if ($installation->cost_report['final_profit'] !== null)
+                <tr><td><strong>Profit final:</strong></td><td>{{ number_format($installation->cost_report['final_profit'], 2, ',', '.') }} lei</td></tr>
+            @endif
+        </table>
+    </div>
+
     @if ($installation->customer_name || $installation->customer_notes)
         <div class="section">
             <strong>Confirmare client</strong>

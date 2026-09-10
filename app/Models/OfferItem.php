@@ -13,6 +13,7 @@ class OfferItem extends Model
     protected $fillable = [
         'offer_id',
         'equipment_id',
+        'service_id',
         'description',
         'quantity',
         'unit_price',
@@ -30,6 +31,11 @@ class OfferItem extends Model
     public function equipment(): BelongsTo
     {
         return $this->belongsTo(Equipment::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function getSubtotalAttribute(): float

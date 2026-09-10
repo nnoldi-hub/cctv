@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Offer;
+use App\Models\Service;
 use App\Models\User;
 use App\Notifications\OfferSent;
 use App\Notifications\OfferAvailable;
@@ -62,6 +63,7 @@ class OfferController extends Controller
         return Inertia::render('Sales/Offers/Create', [
             'clients' => Client::orderBy('name')->get(['id', 'name', 'company_name']),
             'equipment' => Equipment::orderBy('name')->get(['id', 'name', 'unit_price', 'unit']),
+            'services' => Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'sale_price', 'unit']),
             'preselectedClientId' => $request->integer('client_id') ?: null,
         ]);
     }
@@ -110,6 +112,7 @@ class OfferController extends Controller
             'offer' => $offer,
             'clients' => Client::orderBy('name')->get(['id', 'name', 'company_name']),
             'equipment' => Equipment::orderBy('name')->get(['id', 'name', 'unit_price', 'unit']),
+            'services' => Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'sale_price', 'unit']),
         ]);
     }
 
@@ -144,6 +147,7 @@ class OfferController extends Controller
 
         if ($data['status'] === 'accepted') {
             $offer->client->update(['status' => 'client']);
+            $offer->load(['items.equipment', 'items.service']);
             $this->createInstallationFromAcceptedOffer($offer);
         }
 
@@ -186,6 +190,18 @@ class OfferController extends Controller
             'address' => trim(($offer->client->address ?? '').' '.($offer->client->city ?? '')),
             'status' => 'scheduled',
             'checklist' => Installation::defaultChecklist(),
+            'material_items' => $offer->items->whereNotNull('equipment_id')->map(fn ($item) => [
+                'equipment_id' => $item->equipment_id,
+                'name' => $item->equipment?->name ?? $item->description,
+                'unit' => $item->equipment?->unit ?? 'buc',
+                'quantity' => (int) $item->quantity,
+            ])->values()->all(),
+            'service_items' => $offer->items->whereNotNull('service_id')->map(fn ($item) => [
+                'service_id' => $item->service_id,
+                'name' => $item->service?->name ?? $item->description,
+                'unit' => $item->service?->unit ?? 'serviciu',
+                'quantity' => (int) $item->quantity,
+            ])->values()->all(),
             'notes' => "Generata automat la acceptarea ofertei #{$offer->id}.",
         ]);
     }
@@ -199,7 +215,7 @@ class OfferController extends Controller
 
     public function pdf(Offer $offer): HttpResponse
     {
-        $offer->load(['client', 'items.equipment:id,name']);
+        $offer->load(['client', 'items.equipment:id,name', 'items.service:id,name']);
 
         return Pdf::loadView('pdfs.offer', ['offer' => $offer])->stream("oferta-{$offer->id}.pdf");
     }
@@ -214,6 +230,7 @@ class OfferController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.equipment_id' => ['nullable', 'exists:equipment,id'],
+            'items.*.service_id' => ['nullable', 'exists:services,id'],
             'items.*.description' => ['required', 'string', 'max:255'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],

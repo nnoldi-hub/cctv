@@ -9,6 +9,7 @@ const props = defineProps({
     offers: Array,
     technicians: Array,
     equipment: Array,
+    services: Array,
 });
 
 const form = useForm({
@@ -25,6 +26,7 @@ const form = useForm({
     labor_hours: props.installation.labor_hours,
     materials: (props.installation.materials ?? []).join('\n'),
     material_items: props.installation.material_items ?? [],
+    service_items: props.installation.service_items ?? [],
     customer_name: props.installation.customer_name ?? '',
     customer_notes: props.installation.customer_notes ?? '',
     handover_at: props.installation.handover_at ? props.installation.handover_at.substring(0, 16) : '',
@@ -49,7 +51,7 @@ function submit() {
         <div class="py-8">
             <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
                 <form class="space-y-6 rounded-lg bg-white p-6 shadow-sm" @submit.prevent="submit">
-                    <InstallationForm :form="form" :clients="clients" :offers="offers" :technicians="technicians" :equipment="equipment" />
+                    <InstallationForm :form="form" :clients="clients" :offers="offers" :technicians="technicians" :equipment="equipment" :services="services" />
                     <div class="flex justify-end gap-3">
                         <button type="submit" :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
                             Salveaza modificarile

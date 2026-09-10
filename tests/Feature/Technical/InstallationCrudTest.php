@@ -7,6 +7,7 @@ use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Invoice;
 use App\Models\Offer;
+use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -158,10 +159,31 @@ class InstallationCrudTest extends TestCase
         $installation = Installation::factory()->create(['offer_id' => $offer->id, 'status' => 'in_progress']);
 
         $this->actingAs($this->techUser)->patch(route('technical.installations.status', $installation), ['status' => 'completed']);
-        $this->actingAs($this->techUser)->patch(route('technical.installations.status', $installation), ['status' => 'in_progress']);
         $this->actingAs($this->techUser)->patch(route('technical.installations.status', $installation), ['status' => 'completed']);
 
         $this->assertEquals(1, Invoice::where('offer_id', $offer->id)->count());
+    }
+
+    public function test_finalized_installation_cannot_be_reopened_or_edited(): void
+    {
+        $installation = Installation::factory()->create([
+            'status' => 'completed',
+            'completed_at' => now(),
+            'handover_at' => now(),
+            'report_number' => 'PV-2026-00001',
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->patch(route('technical.installations.status', $installation), ['status' => 'in_progress'])
+            ->assertSessionHasErrors('status');
+
+        $this->actingAs($this->techUser)
+            ->put(route('technical.installations.update', $installation), [
+                'client_id' => $installation->client_id,
+                'type' => $installation->type,
+                'status' => 'completed',
+            ])
+            ->assertSessionHasErrors('installation');
     }
 
     public function test_installation_report_pdf_can_be_downloaded(): void
@@ -172,6 +194,30 @@ class InstallationCrudTest extends TestCase
             ->get(route('technical.installations.pdf', $installation))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_installation_cost_report_calculates_materials_services_and_profit(): void
+    {
+        $equipment = Equipment::factory()->create(['cost_price' => 150]);
+        $service = Service::create([
+            'name' => 'Montaj',
+            'category' => 'manopera',
+            'unit' => 'serviciu',
+            'cost_price' => 200,
+            'sale_price' => 500,
+            'is_active' => true,
+        ]);
+        $offer = Offer::factory()->create(['total_amount' => 1500]);
+        $installation = Installation::factory()->create([
+            'offer_id' => $offer->id,
+            'material_items' => [['equipment_id' => $equipment->id, 'quantity' => 2]],
+            'service_items' => [['service_id' => $service->id, 'quantity' => 1]],
+        ]);
+
+        $this->assertSame(300.0, $installation->cost_report['material_cost']);
+        $this->assertSame(200.0, $installation->cost_report['labor_cost']);
+        $this->assertSame(500.0, $installation->cost_report['total_cost']);
+        $this->assertSame(1000.0, $installation->cost_report['estimated_profit']);
     }
 
     public function test_installations_can_be_filtered_by_type(): void

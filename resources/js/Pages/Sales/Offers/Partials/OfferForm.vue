@@ -5,10 +5,11 @@ const props = defineProps({
     form: Object,
     clients: Array,
     equipment: Array,
+    services: Array,
 });
 
 function addItem() {
-    props.form.items.push({ equipment_id: null, description: '', quantity: 1, unit_price: 0 });
+    props.form.items.push({ equipment_id: null, service_id: null, description: '', quantity: 1, unit_price: 0 });
 }
 
 function removeItem(index) {
@@ -16,10 +17,20 @@ function removeItem(index) {
 }
 
 function applyEquipment(item) {
+    item.service_id = null;
     const eq = props.equipment.find((e) => e.id === item.equipment_id);
     if (eq) {
         item.description = eq.name;
         item.unit_price = Number(eq.unit_price);
+    }
+
+    function applyService(item) {
+        item.equipment_id = null;
+        const service = props.services.find((s) => s.id === item.service_id);
+        if (service) {
+            item.description = service.name;
+            item.unit_price = Number(service.sale_price);
+        }
     }
 }
 
@@ -79,6 +90,12 @@ function money(value) {
                         >
                             <option :value="null">Produs personalizat</option>
                             <option v-for="eq in equipment" :key="eq.id" :value="eq.id">{{ eq.name }}</option>
+                        </select>
+                    </div>
+                    <div class="col-span-12 sm:col-span-4">
+                        <select v-model.number="item.service_id" class="block w-full rounded-md border-slate-300 text-sm shadow-sm" @change="applyService(item)">
+                            <option :value="null">Serviciu / manopera</option>
+                            <option v-for="service in services" :key="service.id" :value="service.id">{{ service.name }}</option>
                         </select>
                     </div>
                     <div class="col-span-12 sm:col-span-4">

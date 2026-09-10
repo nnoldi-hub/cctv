@@ -8,6 +8,7 @@ use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Invoice;
 use App\Models\Offer;
+use App\Models\Service;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +38,7 @@ class InstallationController extends Controller
             'filters' => $request->only('status', 'type', 'technician_id'),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
             'equipment' => Equipment::where('is_active', true)->where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
+            'services' => Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'unit']),
         ]);
     }
 
@@ -47,6 +49,7 @@ class InstallationController extends Controller
             'offers' => Offer::with('client:id,name')->where('status', 'accepted')->get(['id', 'client_id', 'title']),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
             'equipment' => Equipment::where('is_active', true)->where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
+            'services' => Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'unit']),
             'preselectedClientId' => $request->integer('client_id') ?: null,
         ]);
     }
@@ -86,11 +89,13 @@ class InstallationController extends Controller
             'offers' => Offer::with('client:id,name')->where('status', 'accepted')->get(['id', 'client_id', 'title']),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
             'equipment' => Equipment::orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
+            'services' => Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'unit']),
         ]);
     }
 
     public function update(Request $request, Installation $installation): RedirectResponse
     {
+        $this->ensureInstallationIsEditable($installation);
         $data = $this->processExecutionDetails($request, $this->validateData($request), $installation);
         DB::transaction(function () use ($data, $installation) {
             $installation->update($data);
@@ -108,6 +113,12 @@ class InstallationController extends Controller
         $data = $request->validate([
             'status' => ['required', 'in:scheduled,in_progress,completed,cancelled'],
         ]);
+
+        if ($this->installationIsFinalized($installation) && $data['status'] !== 'completed') {
+            throw ValidationException::withMessages([
+                'status' => 'Instalarea este finalizata si nu mai poate reveni la un status anterior.',
+            ]);
+        }
 
         DB::transaction(function () use ($data, $installation) {
             $installation->update($data);
@@ -162,6 +173,7 @@ class InstallationController extends Controller
 
     public function destroy(Installation $installation): RedirectResponse
     {
+        $this->ensureInstallationIsEditable($installation);
         $installation->delete();
 
         return redirect()->route('technical.installations.index')->with('success', 'Programare stearsa.');
@@ -169,7 +181,7 @@ class InstallationController extends Controller
 
     public function pdf(Installation $installation): HttpResponse
     {
-        $installation->load(['client', 'technician:id,name']);
+        $installation->load(['client', 'offer', 'technician:id,name']);
 
         return Pdf::loadView('pdfs.installation-report', ['installation' => $installation])
             ->stream("raport-instalare-{$installation->id}.pdf");
@@ -193,6 +205,9 @@ class InstallationController extends Controller
             'material_items' => ['nullable', 'array'],
             'material_items.*.equipment_id' => ['required', 'integer', 'exists:equipment,id'],
             'material_items.*.quantity' => ['required', 'integer', 'min:1', 'max:9999'],
+            'service_items' => ['nullable', 'array'],
+            'service_items.*.service_id' => ['required', 'integer', 'exists:services,id'],
+            'service_items.*.quantity' => ['required', 'integer', 'min:1', 'max:9999'],
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_notes' => ['nullable', 'string', 'max:2000'],
             'photos.*' => ['nullable', 'image', 'max:5120'],
@@ -216,6 +231,19 @@ class InstallationController extends Controller
                     'equipment_id' => $equipment->id,
                     'name' => $equipment->name,
                     'unit' => $equipment->unit,
+                    'quantity' => (int) $item['quantity'],
+                ];
+            })
+            ->values()
+            ->all();
+        $data['service_items'] = collect($data['service_items'] ?? [])
+            ->map(function (array $item): array {
+                $service = Service::findOrFail($item['service_id']);
+
+                return [
+                    'service_id' => $service->id,
+                    'name' => $service->name,
+                    'unit' => $service->unit,
                     'quantity' => (int) $item['quantity'],
                 ];
             })
@@ -278,5 +306,23 @@ class InstallationController extends Controller
         }
 
         $installation->update(['stock_consumed_at' => now()]);
+    }
+
+    private function ensureInstallationIsEditable(Installation $installation): void
+    {
+        if ($this->installationIsFinalized($installation)) {
+            throw ValidationException::withMessages([
+                'installation' => 'Instalarea este finalizata si nu mai poate fi modificata.',
+            ]);
+        }
+    }
+
+    private function installationIsFinalized(Installation $installation): bool
+    {
+        return $installation->status === 'completed'
+            || $installation->completed_at !== null
+            || $installation->handover_at !== null
+            || $installation->report_number !== null
+            || $installation->stock_consumed_at !== null;
     }
 }

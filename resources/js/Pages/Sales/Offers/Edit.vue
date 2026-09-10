@@ -7,6 +7,7 @@ const props = defineProps({
     offer: Object,
     clients: Array,
     equipment: Array,
+    services: Array,
 });
 
 const form = useForm({
@@ -17,6 +18,7 @@ const form = useForm({
     notes: props.offer.notes,
     items: props.offer.items.map((item) => ({
         equipment_id: item.equipment_id,
+        service_id: item.service_id,
         description: item.description,
         quantity: item.quantity,
         unit_price: Number(item.unit_price),
@@ -39,7 +41,7 @@ function submit() {
         <div class="py-8">
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
                 <form class="space-y-6 rounded-lg bg-white p-6 shadow-sm" @submit.prevent="submit">
-                    <OfferForm :form="form" :clients="clients" :equipment="equipment" />
+                    <OfferForm :form="form" :clients="clients" :equipment="equipment" :services="services" />
                     <div class="flex justify-end gap-3">
                         <button type="submit" :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">
                             Salveaza modificarile

@@ -192,6 +192,8 @@ class PortalController extends Controller
             return;
         }
 
+        $offer->load(['items.equipment', 'items.service']);
+
         Installation::create([
             'client_id' => $offer->client_id,
             'offer_id' => $offer->id,
@@ -199,6 +201,18 @@ class PortalController extends Controller
             'address' => trim(($offer->client->address ?? '').' '.($offer->client->city ?? '')),
             'status' => 'scheduled',
             'checklist' => Installation::defaultChecklist(),
+            'material_items' => $offer->items->whereNotNull('equipment_id')->map(fn ($item) => [
+                'equipment_id' => $item->equipment_id,
+                'name' => $item->equipment?->name ?? $item->description,
+                'unit' => $item->equipment?->unit ?? 'buc',
+                'quantity' => (int) $item->quantity,
+            ])->values()->all(),
+            'service_items' => $offer->items->whereNotNull('service_id')->map(fn ($item) => [
+                'service_id' => $item->service_id,
+                'name' => $item->service?->name ?? $item->description,
+                'unit' => $item->service?->unit ?? 'serviciu',
+                'quantity' => (int) $item->quantity,
+            ])->values()->all(),
             'notes' => "Generata automat la acceptarea ofertei #{$offer->id}.",
         ]);
     }
