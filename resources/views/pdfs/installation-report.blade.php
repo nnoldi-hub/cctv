@@ -2,25 +2,47 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Raport instalare #{{ $installation->id }}</title>
+    <title>Proces-verbal {{ $installation->report_number ?? 'PV-'.$installation->id }}</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #1e293b; }
-        h1 { font-size: 20px; margin: 0 0 4px; }
+        @page { margin: 30px 38px 54px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #172033; }
+        .topbar { height: 8px; background: #f59e0b; }
+        .header { width: 100%; padding: 18px 0 16px; border-bottom: 1px solid #dbe3ed; }
+        .header td { vertical-align: top; }
+        .logo { width: 190px; height: auto; }
+        .brand-line { color: #64748b; font-size: 9px; letter-spacing: 1.2px; margin-top: 6px; }
+        h1 { color: #061426; font-size: 19px; margin: 0 0 4px; }
         .muted { color: #64748b; }
         .section { margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        td { padding: 4px 0; }
+        .section-title { color: #061426; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .7px; }
+        .info-card { margin-top: 8px; padding: 11px 13px; background: #f4f7fb; border-left: 4px solid #2563eb; }
+        table { width: 100%; border-collapse: collapse; margin-top: 9px; }
+        td { padding: 5px 0; }
         .checklist-item { padding: 4px 0; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #dbeafe; color: #1e3a8a; font-size: 11px; }
+        .badge { display: inline-block; padding: 3px 8px; background: #dbeafe; color: #1e3a8a; font-size: 10px; font-weight: bold; }
+        .footer { position: fixed; bottom: -32px; left: 0; right: 0; padding-top: 10px; border-top: 1px solid #dbe3ed; color: #64748b; font-size: 9px; }
     </style>
 </head>
 <body>
-    <h1>Proces-verbal {{ $installation->report_number ?? 'PV-'.$installation->id }}</h1>
-    <p>{{ $installation->type === 'interventie' ? 'Interventie' : 'Instalare' }} #{{ $installation->id }}</p>
-    <p class="muted">Generat la {{ now()->format('d.m.Y H:i') }}</p>
+    <div class="topbar"></div>
+    <table class="header" cellspacing="0" cellpadding="0">
+        <tr>
+            <td style="width: 55%;">
+                <img class="logo" src="{{ public_path('branding/logo-negru.png') }}" alt="{{ $settings['company_name'] }}">
+                <div class="brand-line">SIGURANTA INCEPE CU VIZIBILITATE.</div>
+            </td>
+            <td style="width: 45%; text-align: right;">
+                <h1>PROCES-VERBAL</h1>
+                <div class="muted">{{ $installation->report_number ?? 'PV-'.$installation->id }}</div>
+                <div class="muted">Generat la {{ now()->format('d.m.Y H:i') }}</div>
+            </td>
+        </tr>
+    </table>
 
     <div class="section">
-        <table>
+        <div class="section-title">{{ $installation->type === 'interventie' ? 'Interventie' : 'Instalare' }} #{{ $installation->id }}</div>
+        <div class="info-card">
+        <table style="margin-top: 0;">
             <tr>
                 <td style="width: 30%;"><strong>Client:</strong></td>
                 <td>{{ $installation->client->name }}</td>
@@ -46,6 +68,7 @@
                 <td>{{ $installation->handover_at?->format('d.m.Y H:i') ?? '-' }}</td>
             </tr>
         </table>
+        </div>
     </div>
 
     @if (!empty($installation->checklist))
@@ -138,8 +161,10 @@
         </div>
     @endif
 
-    <div class="section muted">
-        Raport generat automat prin platforma CCTV Security.
+    <div class="footer">
+        <strong>{{ $settings['company_name'] }}</strong>
+        @if ($settings['company_address']) &middot; {{ $settings['company_address'] }} @endif
+        &middot; {{ $settings['company_email'] }} &middot; {{ $settings['company_phone'] }}
     </div>
 </body>
 </html>

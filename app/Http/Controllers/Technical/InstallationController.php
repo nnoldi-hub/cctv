@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Equipment;
 use App\Models\Installation;
+use App\Models\Setting;
 use App\Models\Invoice;
 use App\Models\Offer;
 use App\Models\Service;
@@ -183,7 +184,10 @@ class InstallationController extends Controller
     {
         $installation->load(['client', 'offer', 'technician:id,name']);
 
-        return Pdf::loadView('pdfs.installation-report', ['installation' => $installation])
+        return Pdf::loadView('pdfs.installation-report', [
+            'installation' => $installation,
+            'settings' => Setting::allSettings(),
+        ])
             ->stream("raport-instalare-{$installation->id}.pdf");
     }
 

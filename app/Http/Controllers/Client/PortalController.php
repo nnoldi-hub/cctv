@@ -144,7 +144,10 @@ class PortalController extends Controller
     {
         $record = $request->user()->clientProfile->installations()->with(['client', 'technician:id,name'])->findOrFail($installation);
 
-        return Pdf::loadView('pdfs.installation-report', ['installation' => $record])
+        return Pdf::loadView('pdfs.installation-report', [
+            'installation' => $record,
+            'settings' => Setting::allSettings(),
+        ])
             ->stream("raport-lucrare-{$record->id}.pdf");
     }
 
