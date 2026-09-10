@@ -2,7 +2,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import GlobalSearch from '@/Components/GlobalSearch.vue';
 import Icon from '@/Components/Icon.vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
 
 const page = usePage();
@@ -233,13 +233,14 @@ const mobileOpen = ref(false);
                 <div class="hidden flex-1 sm:block">
                     <GlobalSearch />
                 </div>
-                <Link
+                <button
                     v-if="page.props.auth.unreadNotifications"
-                    :href="route('technical.tickets.index')"
+                    type="button"
                     class="rounded-md bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100"
+                    @click="router.patch(route('notifications.read-all'), {}, { preserveScroll: true })"
                 >
                     {{ page.props.auth.unreadNotifications }} notificări noi
-                </Link>
+                </button>
             </div>
 
             <header v-if="$slots.header" class="flex-shrink-0 bg-white shadow-sm">

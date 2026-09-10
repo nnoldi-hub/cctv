@@ -137,4 +137,19 @@ class ReportsAndDashboardTest extends TestCase
 
         $this->assertDatabaseHas('tickets', ['id' => $ticket->id, 'status' => 'resolved']);
     }
+
+    public function test_authenticated_user_can_mark_all_notifications_as_read(): void
+    {
+        $this->adminUser->notifications()->create([
+            'id' => '00000000-0000-0000-0000-000000000001',
+            'type' => 'test',
+            'data' => ['title' => 'Test'],
+        ]);
+
+        $this->actingAs($this->adminUser)
+            ->patch(route('notifications.read-all'))
+            ->assertRedirect();
+
+        $this->assertNotNull($this->adminUser->notifications()->find('00000000-0000-0000-0000-000000000001')->read_at);
+    }
 }
