@@ -18,4 +18,5 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureClientPortal::
     Route::get('/echipamente', [PortalController::class, 'equipment'])->name('equipment.index');
     Route::get('/notificari', [PortalController::class, 'notifications'])->name('notifications.index');
     Route::patch('/notificari/{notification}/citita', [PortalController::class, 'readNotification'])->name('notifications.read');
+    Route::patch('/notificari/citeste-toate', [PortalController::class, 'readAllNotifications'])->name('notifications.read-all');
 });

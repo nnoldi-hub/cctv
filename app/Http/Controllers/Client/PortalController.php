@@ -186,6 +186,13 @@ class PortalController extends Controller
         return back();
     }
 
+    public function readAllNotifications(Request $request): RedirectResponse
+    {
+        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+
+        return back()->with('success', 'Toate notificarile au fost marcate ca citite.');
+    }
+
     private function createInstallationFromAcceptedOffer(Offer $offer): void
     {
         if (Installation::where('offer_id', $offer->id)->exists()) {
