@@ -1,11 +1,19 @@
 <script setup>
 import ClientLayout from '@/Layouts/ClientLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 
 defineProps({ offers: Array });
 
 function money(value) {
     return Number(value).toLocaleString('ro-RO', { minimumFractionDigits: 2 });
+}
+
+function respond(offer, status) {
+    const message = window.prompt(status === 'accepted'
+        ? 'Mesaj optional pentru echipa CCTV:'
+        : 'Spune-ne, te rog, de ce respingi oferta (optional):', '');
+    if (message === null) return;
+    useForm({ status, message }).patch(route('client.offers.status', offer.id), { preserveScroll: true });
 }
 </script>
 
@@ -38,6 +46,10 @@ function money(value) {
                     </table>
                 </div>
                 <p class="mt-4 text-right text-lg font-bold text-slate-900">Total: {{ money(offer.total_amount) }} lei</p>
+                <div v-if="offer.status === 'sent'" class="mt-5 flex flex-wrap justify-end gap-3 border-t pt-4">
+                    <button class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white" @click="respond(offer, 'accepted')">Accepta oferta</button>
+                    <button class="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-700" @click="respond(offer, 'rejected')">Respinge oferta</button>
+                </div>
             </div>
             <p v-if="!offers.length" class="rounded-xl bg-white p-6 text-slate-500">Nu exista oferte disponibile.</p>
         </div>

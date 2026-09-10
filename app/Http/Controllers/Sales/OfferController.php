@@ -75,7 +75,7 @@ class OfferController extends Controller
                 'client_id' => $data['client_id'],
                 'user_id' => $request->user()->id,
                 'title' => $data['title'],
-                'status' => $data['status'],
+                'status' => 'draft',
                 'valid_until' => $data['valid_until'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'total_amount' => collect($data['items'])->sum(fn ($item) => $item['quantity'] * $item['unit_price']),
@@ -121,7 +121,7 @@ class OfferController extends Controller
             $offer->update([
                 'client_id' => $data['client_id'],
                 'title' => $data['title'],
-                'status' => $data['status'],
+                'status' => in_array($offer->status, ['sent', 'accepted', 'rejected'], true) ? 'draft' : $data['status'],
                 'valid_until' => $data['valid_until'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'total_amount' => collect($data['items'])->sum(fn ($item) => $item['quantity'] * $item['unit_price']),

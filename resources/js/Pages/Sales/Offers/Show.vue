@@ -30,6 +30,13 @@ function setStatus(status) {
     router.patch(route('sales.offers.status', props.offer.id), { status }, { preserveScroll: true });
 }
 
+function sendOffer() {
+    const action = offer.status === 'sent' ? 'Retrimite oferta' : 'Trimite oferta';
+    if (confirm(`${action}? Clientul va primi o noua notificare.`)) {
+        setStatus('sent');
+    }
+}
+
 function destroy() {
     if (confirm('Stergi aceasta oferta?')) {
         router.delete(route('sales.offers.destroy', props.offer.id));
@@ -54,8 +61,8 @@ function destroy() {
                     <button class="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50" @click="destroy">
                         Sterge
                     </button>
-                    <button v-if="offer.status !== 'sent'" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500" @click="setStatus('sent')">
-                        Trimite oferta
+                    <button v-if="['draft', 'sent'].includes(offer.status)" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500" @click="sendOffer">
+                        {{ offer.status === 'sent' ? 'Retrimite oferta' : 'Trimite oferta' }}
                     </button>
                 </div>
             </div>

@@ -10,6 +10,7 @@ use App\Models\Offer;
 use App\Models\Installation;
 use App\Notifications\TicketUpdated;
 use App\Notifications\OfferAvailable;
+use App\Notifications\OfferStatusChanged;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\RedirectResponse;
@@ -69,6 +70,40 @@ class PortalController extends Controller
                 ->latest()
                 ->get(),
         ]);
+    }
+
+    public function updateOfferStatus(Request $request, int $offer): RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => ['required', 'in:accepted,rejected'],
+            'message' => ['nullable', 'string', 'max:2000'],
+        ]);
+        $record = $request->user()->clientProfile->offers()->findOrFail($offer);
+        abort_unless($record->status === 'sent', 422, 'Oferta nu mai este disponibila pentru raspuns.');
+
+        $record->update(['status' => $data['status']]);
+        $record->load('user');
+
+        if ($data['message']) {
+            $record->client->tickets()->latest()->first()?->events()->create([
+                'user_id' => $request->user()->id,
+                'type' => 'comment',
+                'description' => 'Răspuns la ofertă: '.$data['message'],
+            ]);
+        }
+
+        if ($record->user) {
+            $record->user->notify(new OfferStatusChanged($record, $data['status'], $data['message'] ?? null));
+        }
+
+        if ($data['status'] === 'accepted') {
+            $record->client->update(['status' => 'client']);
+            $this->createInstallationFromAcceptedOffer($record);
+        }
+
+        return back()->with('success', $data['status'] === 'accepted'
+            ? 'Oferta a fost acceptata.'
+            : 'Oferta a fost respinsa.');
     }
 
     public function storeTicket(Request $request, SmsService $sms): RedirectResponse
@@ -149,5 +184,22 @@ class PortalController extends Controller
         $request->user()->notifications()->whereKey($notification)->update(['read_at' => now()]);
 
         return back();
+    }
+
+    private function createInstallationFromAcceptedOffer(Offer $offer): void
+    {
+        if (Installation::where('offer_id', $offer->id)->exists()) {
+            return;
+        }
+
+        Installation::create([
+            'client_id' => $offer->client_id,
+            'offer_id' => $offer->id,
+            'type' => 'instalare',
+            'address' => trim(($offer->client->address ?? '').' '.($offer->client->city ?? '')),
+            'status' => 'scheduled',
+            'checklist' => Installation::defaultChecklist(),
+            'notes' => "Generata automat la acceptarea ofertei #{$offer->id}.",
+        ]);
     }
 }
