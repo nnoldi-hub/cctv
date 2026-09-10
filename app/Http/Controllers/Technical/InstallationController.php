@@ -36,7 +36,7 @@ class InstallationController extends Controller
             'installations' => $installations,
             'filters' => $request->only('status', 'type', 'technician_id'),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
-            'equipment' => Equipment::where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
+            'equipment' => Equipment::where('is_active', true)->where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
         ]);
     }
 
@@ -46,7 +46,7 @@ class InstallationController extends Controller
             'clients' => Client::orderBy('name')->get(['id', 'name', 'address', 'city']),
             'offers' => Offer::with('client:id,name')->where('status', 'accepted')->get(['id', 'client_id', 'title']),
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
-            'equipment' => Equipment::where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
+            'equipment' => Equipment::where('is_active', true)->where('stock_quantity', '>', 0)->orderBy('name')->get(['id', 'name', 'sku', 'unit', 'stock_quantity']),
             'preselectedClientId' => $request->integer('client_id') ?: null,
         ]);
     }

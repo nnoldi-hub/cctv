@@ -12,8 +12,10 @@ const form = useForm({
     sku: props.equipment.sku,
     unit: props.equipment.unit,
     unit_price: Number(props.equipment.unit_price),
+    cost_price: Number(props.equipment.cost_price ?? 0),
     stock_quantity: props.equipment.stock_quantity,
     description: props.equipment.description,
+    is_active: props.equipment.is_active ?? true,
 });
 
 function submit() {
@@ -62,6 +64,10 @@ function submit() {
                             <input v-model.number="form.unit_price" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                         </div>
                         <div>
+                            <label class="block text-sm font-medium text-slate-700">Pret cost (lei)</label>
+                            <input v-model.number="form.cost_price" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div>
                             <label class="block text-sm font-medium text-slate-700">Stoc</label>
                             <input v-model.number="form.stock_quantity" type="number" min="0" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                         </div>
@@ -69,6 +75,10 @@ function submit() {
                             <label class="block text-sm font-medium text-slate-700">Descriere</label>
                             <textarea v-model="form.description" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                         </div>
+                        <label class="flex items-center gap-2 text-sm text-slate-600 sm:col-span-2">
+                            <input v-model="form.is_active" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                            Material activ in catalog
+                        </label>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">

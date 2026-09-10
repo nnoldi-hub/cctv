@@ -4,6 +4,7 @@ use App\Http\Controllers\Technical\DashboardController;
 use App\Http\Controllers\Technical\EquipmentController;
 use App\Http\Controllers\Technical\InstallationController;
 use App\Http\Controllers\Technical\TicketController;
+use App\Http\Controllers\Technical\ServiceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('tehnic')->name('technical.')->group(function () {
@@ -20,6 +21,7 @@ Route::middleware(['auth', 'verified'])->prefix('tehnic')->name('technical.')->g
     Route::middleware('role_or_permission:admin|tehnic|equipment.view|equipment.manage')->group(function () {
         Route::resource('echipamente', EquipmentController::class)->except(['show'])->parameters(['echipamente' => 'equipment'])->names('equipment');
         Route::patch('/echipamente/{equipment}/stoc', [EquipmentController::class, 'adjustStock'])->name('equipment.stock');
+        Route::resource('servicii', ServiceController::class)->except(['show'])->parameters(['servicii' => 'service'])->names('services');
     });
 
     Route::middleware('role_or_permission:admin|tehnic|installations.view|installations.manage')->group(function () {

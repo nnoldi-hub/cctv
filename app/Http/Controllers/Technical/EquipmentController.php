@@ -77,14 +77,21 @@ class EquipmentController extends Controller
 
     private function validateData(Request $request): array
     {
+        $request->merge([
+            'cost_price' => $request->input('cost_price', 0),
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:camera,dvr,nvr,cable,accessory,other'],
             'sku' => ['nullable', 'string', 'max:100'],
             'unit' => ['required', 'string', 'max:50'],
             'unit_price' => ['required', 'numeric', 'min:0'],
+            'cost_price' => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'is_active' => ['required', 'boolean'],
         ]);
     }
 }

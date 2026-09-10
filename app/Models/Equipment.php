@@ -17,8 +17,10 @@ class Equipment extends Model
         'sku',
         'unit',
         'unit_price',
+        'cost_price',
         'stock_quantity',
         'description',
+        'is_active',
         'client_id',
         'location',
         'warranty_until',
@@ -27,6 +29,8 @@ class Equipment extends Model
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
+        'is_active' => 'boolean',
         'warranty_until' => 'date',
         'installed_at' => 'date',
     ];

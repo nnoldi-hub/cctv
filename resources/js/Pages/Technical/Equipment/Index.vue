@@ -99,6 +99,7 @@ function destroy(item) {
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-right text-sm">
+                                    <span class="mr-3 rounded-full px-2 py-1 text-xs" :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'">{{ item.is_active ? 'Activ' : 'Inactiv' }}</span>
                                     <Link :href="route('technical.equipment.edit', item.id)" class="text-slate-500 hover:text-slate-700">Editeaza</Link>
                                     <button class="ml-3 text-red-500 hover:text-red-700" @click="destroy(item)">Sterge</button>
                                 </td>
