@@ -98,4 +98,19 @@ class ExpenseCrudTest extends TestCase
         $this->assertNotNull($expense->document_path);
         Storage::disk('public')->assertExists($expense->document_path);
     }
+
+    public function test_admin_can_export_expenses(): void
+    {
+        Expense::create([
+            'description' => 'Cost export',
+            'category' => 'transport',
+            'amount' => 120,
+            'expense_date' => '2026-09-10',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.expenses.export', ['category' => 'transport']))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }

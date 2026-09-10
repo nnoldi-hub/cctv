@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ExpensesExport;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\Installation;
@@ -11,9 +12,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExpenseController extends Controller
 {
+    public function export(Request $request)
+    {
+        return Excel::download(
+            new ExpensesExport($request->only('category')),
+            'cheltuieli-'.now()->format('Y-m-d').'.xlsx'
+        );
+    }
+
     public function index(Request $request): Response
     {
         $expenses = Expense::query()
