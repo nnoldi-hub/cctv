@@ -29,6 +29,7 @@ class ContactController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'city' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'privacy_consent' => ['accepted'],
         ]);
 
         $client = Client::create([
@@ -39,6 +40,8 @@ class ContactController extends Controller
             'notes' => $data['notes'] ?? null,
             'source' => 'web',
             'status' => 'lead',
+            'privacy_consent_at' => now(),
+            'privacy_consent_ip' => $request->ip(),
         ]);
 
         $recipients = Role::findByName('admin')->users()->get()

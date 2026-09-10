@@ -59,6 +59,7 @@ class SmsNotificationTest extends TestCase
         $this->post(route('public.lead.store'), [
             'name' => 'Test Lead',
             'phone' => '0722999888',
+            'privacy_consent' => '1',
         ]);
 
         $this->assertDatabaseCount('sms_logs', 1);

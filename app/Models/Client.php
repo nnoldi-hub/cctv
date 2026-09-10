@@ -26,6 +26,8 @@ class Client extends Model
         'lost_reason',
         'assigned_to',
         'notes',
+        'privacy_consent_at',
+        'privacy_consent_ip',
     ];
 
     public function assignedTo(): BelongsTo

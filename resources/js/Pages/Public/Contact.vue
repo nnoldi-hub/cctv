@@ -12,6 +12,7 @@ const form = useForm({
     email: '',
     city: '',
     notes: params.get('notes') ?? (params.get('package') ? `Interesat de pachetul: ${params.get('package')}` : ''),
+    privacy_consent: false,
 });
 
 function submit() {
@@ -51,6 +52,11 @@ function submit() {
                         <input v-model="form.name" type="text" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
                         <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
                     </div>
+                    <label class="flex items-start gap-2 text-sm text-slate-600">
+                        <input v-model="form.privacy_consent" type="checkbox" required class="mt-1 rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
+                        <span>Sunt de acord cu prelucrarea datelor conform <a :href="route('public.privacy')" class="text-blue-600 underline">Politicii de confidentialitate</a> si <a :href="route('public.terms')" class="text-blue-600 underline">Termenilor</a>.</span>
+                    </label>
+                    <p v-if="form.errors.privacy_consent" class="mt-1 text-sm text-red-600">{{ form.errors.privacy_consent }}</p>
                     <div>
                         <label class="block text-sm font-medium text-slate-700">Telefon *</label>
                         <input v-model="form.phone" type="text" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />

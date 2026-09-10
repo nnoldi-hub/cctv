@@ -28,6 +28,7 @@ class LeadCaptureTest extends TestCase
             'email' => 'ion@example.com',
             'city' => 'Cluj-Napoca',
             'notes' => 'Interesat de pachetul Medium',
+            'privacy_consent' => '1',
         ]);
 
         $response->assertRedirect();
