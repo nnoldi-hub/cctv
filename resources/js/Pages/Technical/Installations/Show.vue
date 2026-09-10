@@ -109,6 +109,10 @@ const checklistProgress = computed(() => {
                                 <dt class="text-slate-400">Data programata</dt>
                                 <dd class="text-slate-900">{{ installation.scheduled_at ? new Date(installation.scheduled_at).toLocaleString('ro-RO') : '-' }}</dd>
                             </div>
+                            <div v-if="installation.report_number">
+                                <dt class="text-slate-400">Numar PV</dt>
+                                <dd class="text-slate-900">{{ installation.report_number }}</dd>
+                            </div>
                             <div v-if="installation.notes">
                                 <dt class="text-slate-400">Note</dt>
                                 <dd class="whitespace-pre-line text-slate-900">{{ installation.notes }}</dd>
@@ -170,9 +174,20 @@ const checklistProgress = computed(() => {
                         <dl class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                             <div><dt class="text-slate-400">Ore lucrate</dt><dd class="text-slate-900">{{ installation.labor_hours ?? '-' }}</dd></div>
                             <div><dt class="text-slate-400">Client la receptie</dt><dd class="text-slate-900">{{ installation.customer_name ?? '-' }}</dd></div>
+                            <div><dt class="text-slate-400">Data receptiei</dt><dd class="text-slate-900">{{ installation.handover_at ? new Date(installation.handover_at).toLocaleString('ro-RO') : '-' }}</dd></div>
                             <div class="sm:col-span-2"><dt class="text-slate-400">Materiale consumate</dt><dd class="whitespace-pre-line text-slate-900">{{ installation.materials?.join('\n') || '-' }}</dd></div>
                             <div class="sm:col-span-2"><dt class="text-slate-400">Observatii client</dt><dd class="whitespace-pre-line text-slate-900">{{ installation.customer_notes || '-' }}</dd></div>
                         </dl>
+                        <div v-if="installation.technician_signature || installation.customer_signature" class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div v-if="installation.technician_signature">
+                                <p class="text-xs text-slate-400">Semnatura tehnician</p>
+                                <img :src="installation.technician_signature" alt="Semnatura tehnician" class="mt-2 h-16 max-w-full object-contain" />
+                            </div>
+                            <div v-if="installation.customer_signature">
+                                <p class="text-xs text-slate-400">Semnatura client</p>
+                                <img :src="installation.customer_signature" alt="Semnatura client" class="mt-2 h-16 max-w-full object-contain" />
+                            </div>
+                        </div>
                         <div v-if="installation.photos?.length" class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
                             <a v-for="photo in installation.photos" :key="photo" :href="photo" target="_blank" rel="noopener">
                                 <img :src="photo" alt="Fotografie lucrare" class="h-32 w-full rounded-md object-cover" />

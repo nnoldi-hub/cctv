@@ -25,6 +25,9 @@ const form = useForm({
     materials: (props.installation.materials ?? []).join('\n'),
     customer_name: props.installation.customer_name ?? '',
     customer_notes: props.installation.customer_notes ?? '',
+    handover_at: props.installation.handover_at ? props.installation.handover_at.substring(0, 16) : '',
+    technician_signature: null,
+    customer_signature: null,
     photos: [],
 });
 

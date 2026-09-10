@@ -25,6 +25,9 @@ const form = useForm({
     materials: '',
     customer_name: '',
     customer_notes: '',
+    handover_at: '',
+    technician_signature: null,
+    customer_signature: null,
     photos: [],
 });
 

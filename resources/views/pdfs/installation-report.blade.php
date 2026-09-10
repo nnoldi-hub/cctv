@@ -15,7 +15,8 @@
     </style>
 </head>
 <body>
-    <h1>Raport tehnic - {{ $installation->type === 'interventie' ? 'Interventie' : 'Instalare' }} #{{ $installation->id }}</h1>
+    <h1>Proces-verbal {{ $installation->report_number ?? 'PV-'.$installation->id }}</h1>
+    <p>{{ $installation->type === 'interventie' ? 'Interventie' : 'Instalare' }} #{{ $installation->id }}</p>
     <p class="muted">Generat la {{ now()->format('d.m.Y H:i') }}</p>
 
     <div class="section">
@@ -39,6 +40,10 @@
             <tr>
                 <td><strong>Status:</strong></td>
                 <td><span class="badge">{{ strtoupper($installation->status) }}</span></td>
+            </tr>
+            <tr>
+                <td><strong>Data receptiei:</strong></td>
+                <td>{{ $installation->handover_at?->format('d.m.Y H:i') ?? '-' }}</td>
             </tr>
         </table>
     </div>
@@ -76,6 +81,28 @@
             <strong>Confirmare client</strong>
             <p>Nume: {{ $installation->customer_name ?? '-' }}</p>
             <p>{{ $installation->customer_notes }}</p>
+        </div>
+    @endif
+
+    @if ($installation->technician_signature || $installation->customer_signature)
+        <div class="section">
+            <strong>Semnaturi</strong>
+            <table>
+                <tr>
+                    <td style="width: 50%;">
+                        Tehnician<br>
+                        @if ($installation->technician_signature)
+                            <img src="{{ public_path(str_replace('/storage/', 'storage/', parse_url($installation->technician_signature, PHP_URL_PATH))) }}" style="max-width:180px;max-height:70px;">
+                        @endif
+                    </td>
+                    <td>
+                        Client<br>
+                        @if ($installation->customer_signature)
+                            <img src="{{ public_path(str_replace('/storage/', 'storage/', parse_url($installation->customer_signature, PHP_URL_PATH))) }}" style="max-width:180px;max-height:70px;">
+                        @endif
+                    </td>
+                </tr>
+            </table>
         </div>
     @endif
 

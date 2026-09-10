@@ -80,6 +80,10 @@ class InstallationCrudTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('installations', ['id' => $installation->id, 'status' => 'completed']);
+        $installation->refresh();
+        $this->assertSame('PV-'.now()->format('Y').'-'.str_pad((string) $installation->id, 5, '0', STR_PAD_LEFT), $installation->report_number);
+        $this->assertNotNull($installation->completed_at);
+        $this->assertNotNull($installation->handover_at);
     }
 
     public function test_completing_an_installation_linked_to_an_offer_creates_an_invoice(): void

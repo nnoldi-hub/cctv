@@ -97,6 +97,18 @@ function useClientAddress() {
             <label class="block text-sm font-medium text-slate-700">Observatii client / receptie</label>
             <textarea v-model="form.customer_notes" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
         </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Data si ora receptiei</label>
+            <input v-model="form.handover_at" type="datetime-local" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Semnatura tehnician (imagine)</label>
+            <input type="file" accept="image/*" class="mt-1 block w-full text-sm text-slate-600" @change="form.technician_signature = $event.target.files[0] ?? null" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Semnatura client (imagine)</label>
+            <input type="file" accept="image/*" class="mt-1 block w-full text-sm text-slate-600" @change="form.customer_signature = $event.target.files[0] ?? null" />
+        </div>
         <div class="sm:col-span-2">
             <label class="block text-sm font-medium text-slate-700">Fotografii lucrare</label>
             <input type="file" accept="image/*" multiple class="mt-1 block w-full text-sm text-slate-600" @change="form.photos = [...$event.target.files]" />

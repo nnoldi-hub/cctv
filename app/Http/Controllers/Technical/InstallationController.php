@@ -54,6 +54,10 @@ class InstallationController extends Controller
 
         $installation = Installation::create($data);
 
+        if ($installation->status === 'completed') {
+            $this->markCompleted($installation);
+        }
+
         return redirect()->route('technical.installations.show', $installation)->with('success', 'Programare creata.');
     }
 
@@ -81,6 +85,10 @@ class InstallationController extends Controller
         $data = $this->processExecutionDetails($request, $this->validateData($request), $installation);
         $installation->update($data);
 
+        if ($installation->status === 'completed') {
+            $this->markCompleted($installation);
+        }
+
         return redirect()->route('technical.installations.show', $installation)->with('success', 'Programare actualizata.');
     }
 
@@ -93,7 +101,7 @@ class InstallationController extends Controller
         $installation->update($data);
 
         if ($data['status'] === 'completed') {
-            $installation->update(['completed_at' => $installation->completed_at ?? now()]);
+            $this->markCompleted($installation);
             $this->createInvoiceFromCompletedInstallation($installation);
         }
 
@@ -172,6 +180,9 @@ class InstallationController extends Controller
             'customer_name' => ['nullable', 'string', 'max:255'],
             'customer_notes' => ['nullable', 'string', 'max:2000'],
             'photos.*' => ['nullable', 'image', 'max:5120'],
+            'handover_at' => ['nullable', 'date'],
+            'technician_signature' => ['nullable', 'image', 'max:5120'],
+            'customer_signature' => ['nullable', 'image', 'max:5120'],
         ]);
     }
 
@@ -192,6 +203,25 @@ class InstallationController extends Controller
             $data['photos'] = array_values(array_merge($installation?->photos ?? [], $photos));
         }
 
+        foreach (['technician_signature', 'customer_signature'] as $signatureField) {
+            if ($request->hasFile($signatureField)) {
+                $data[$signatureField] = Storage::disk('public')->url(
+                    $request->file($signatureField)->store('installations/signatures', 'public')
+                );
+            } elseif ($installation) {
+                $data[$signatureField] = $installation->{$signatureField};
+            }
+        }
+
         return $data;
+    }
+
+    private function markCompleted(Installation $installation): void
+    {
+        $installation->update([
+            'completed_at' => $installation->completed_at ?? now(),
+            'handover_at' => $installation->handover_at ?? now(),
+            'report_number' => $installation->report_number ?? 'PV-'.now()->format('Y').'-'.str_pad((string) $installation->id, 5, '0', STR_PAD_LEFT),
+        ]);
     }
 }

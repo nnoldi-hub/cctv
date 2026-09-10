@@ -39,6 +39,10 @@ class Installation extends Model
         'customer_name',
         'customer_notes',
         'completed_at',
+        'report_number',
+        'handover_at',
+        'technician_signature',
+        'customer_signature',
     ];
 
     protected $casts = [
@@ -50,6 +54,7 @@ class Installation extends Model
         'materials' => 'array',
         'photos' => 'array',
         'completed_at' => 'datetime',
+        'handover_at' => 'datetime',
     ];
 
     public function client(): BelongsTo
