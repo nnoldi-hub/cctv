@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Equipment;
 use App\Models\Ticket;
+use App\Models\TicketComment;
+use App\Models\Offer;
 use App\Models\Installation;
 use App\Notifications\TicketUpdated;
+use App\Notifications\OfferAvailable;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\RedirectResponse;
@@ -38,6 +41,34 @@ class PortalController extends Controller
         $client = $request->user()->clientProfile;
 
         return Inertia::render('Client/Tickets/Index', ['tickets' => $client->tickets()->with(['assignedTo:id,name', 'events.user:id,name'])->latest()->paginate(10)]);
+    }
+
+    public function addTicketComment(Request $request, int $ticket): RedirectResponse
+    {
+        $data = $request->validate(['body' => ['required', 'string', 'max:2000']]);
+        $record = $request->user()->clientProfile->tickets()->findOrFail($ticket);
+        $record->comments()->create(['user_id' => $request->user()->id, 'body' => $data['body']]);
+        $record->events()->create([
+            'user_id' => $request->user()->id,
+            'type' => 'comment',
+            'description' => 'Răspuns adăugat de client: '.$data['body'],
+        ]);
+
+        $staff = \App\Models\User::role(['admin', 'tehnic', 'suport'])->get();
+        Notification::send($staff, new TicketUpdated($record, 'Clientul a răspuns la cererea #'.$record->id.'.'));
+
+        return back()->with('success', 'Răspunsul a fost trimis.');
+    }
+
+    public function offers(Request $request): Response
+    {
+        return Inertia::render('Client/Offers/Index', [
+            'offers' => $request->user()->clientProfile->offers()
+                ->with('items')
+                ->whereIn('status', ['sent', 'accepted', 'rejected'])
+                ->latest()
+                ->get(),
+        ]);
     }
 
     public function storeTicket(Request $request, SmsService $sms): RedirectResponse

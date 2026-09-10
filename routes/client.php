@@ -7,6 +7,8 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureClientPortal::
     Route::get('/', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/tichete', [PortalController::class, 'tickets'])->name('tickets.index');
     Route::post('/tichete', [PortalController::class, 'storeTicket'])->name('tickets.store');
+    Route::post('/tichete/{ticket}/comentarii', [PortalController::class, 'addTicketComment'])->name('tickets.comments');
+    Route::get('/oferte', [PortalController::class, 'offers'])->name('offers.index');
     Route::get('/lucrari', [PortalController::class, 'works'])->name('works.index');
     Route::get('/lucrari/{installation}/raport', [PortalController::class, 'workReport'])->name('works.report');
     Route::get('/facturi', [PortalController::class, 'invoices'])->name('invoices.index');

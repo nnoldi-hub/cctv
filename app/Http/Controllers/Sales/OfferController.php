@@ -8,7 +8,9 @@ use App\Models\Client;
 use App\Models\Equipment;
 use App\Models\Installation;
 use App\Models\Offer;
+use App\Models\User;
 use App\Notifications\OfferSent;
+use App\Notifications\OfferAvailable;
 use App\Services\SmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -84,6 +86,10 @@ class OfferController extends Controller
             return $offer;
         });
 
+        if ($offer->status === 'sent') {
+            $this->notifySentOffer($offer, $request->user());
+        }
+
         return redirect()->route('sales.offers.show', $offer)->with('success', 'Oferta creata cu succes.');
     }
 
@@ -142,16 +148,29 @@ class OfferController extends Controller
         }
 
         if ($data['status'] === 'sent') {
-            if ($offer->client->email) {
-                Notification::route('mail', $offer->client->email)->notify(new OfferSent($offer));
-            }
-
+            $this->notifySentOffer($offer, $request->user());
             if ($offer->client->phone) {
                 $sms->send($offer->client->phone, "Ti-am trimis oferta \"{$offer->title}\". Te asteptam cu intrebari!");
             }
         }
 
         return back()->with('success', 'Status oferta actualizat.');
+    }
+
+    private function notifySentOffer(Offer $offer, User $sender): void
+    {
+        $offer->loadMissing('client.user');
+
+        if ($offer->client->user) {
+            $offer->client->user->notify(new OfferSent($offer));
+        } elseif ($offer->client->email && config('notifications.mail_enabled')) {
+            Notification::route('mail', $offer->client->email)->notify(new OfferSent($offer));
+        }
+
+        Notification::send(
+            User::role(['admin', 'vanzari'])->where('users.id', '!=', $sender->id)->get(),
+            new OfferAvailable($offer),
+        );
     }
 
     private function createInstallationFromAcceptedOffer(Offer $offer): void

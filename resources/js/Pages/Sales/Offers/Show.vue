@@ -54,6 +54,9 @@ function destroy() {
                     <button class="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50" @click="destroy">
                         Sterge
                     </button>
+                    <button v-if="offer.status !== 'sent'" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500" @click="setStatus('sent')">
+                        Trimite oferta
+                    </button>
                 </div>
             </div>
         </template>

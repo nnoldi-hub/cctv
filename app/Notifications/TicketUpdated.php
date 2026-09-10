@@ -24,18 +24,20 @@ class TicketUpdated extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
+        $isClient = $notifiable->hasAnyRole(['client', 'client-manager']);
+
         return (new MailMessage)
             ->subject('Actualizare cerere #'.$this->ticket->id)
-            ->greeting('Buna, '.$notifiable->name.'!')
-            ->line($this->message)
-            ->line('Cerere: '.$this->ticket->subject)
-            ->action(
-                $notifiable->hasAnyRole(['client', 'client-manager']) ? 'Vezi portalul client' : 'Vezi tichetele',
-                $notifiable->hasAnyRole(['client', 'client-manager'])
+            ->view('emails.ticket-updated', [
+                'recipientName' => $notifiable->name,
+                'message' => $this->message,
+                'ticket' => $this->ticket,
+                'actionLabel' => $isClient ? 'Vezi portalul client' : 'Vezi tichetele',
+                'actionUrl' => $isClient
                     ? route('client.tickets.index')
                     : route('technical.tickets.show', $this->ticket),
-            )
-            ->salutation('Cu stima, echipa CCTV Security');
+                'logoUrl' => asset('branding/logo-cctv.png'),
+            ]);
     }
 
     public function toDatabase(object $notifiable): array

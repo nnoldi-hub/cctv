@@ -23,7 +23,7 @@ class OfferSent extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return config('notifications.mail_enabled') ? ['database', 'mail'] : ['database'];
     }
 
     /**
@@ -33,11 +33,19 @@ class OfferSent extends Notification
     {
         return (new MailMessage)
             ->subject('Oferta ta de la CCTV Security')
-            ->greeting('Buna, '.$this->offer->client->name.'!')
-            ->line('Ti-am pregatit o oferta pentru sistemul de supraveghere video.')
-            ->line('Titlu: '.$this->offer->title)
-            ->line('Valoare estimata: '.number_format((float) $this->offer->total_amount, 2).' lei')
-            ->line('Pentru detalii complete, te rugam sa ne contactezi.')
-            ->salutation('Cu stima, echipa CCTV Security');
+            ->view('emails.offer-sent', [
+                'recipientName' => $this->offer->client->name,
+                'offer' => $this->offer,
+                'logoUrl' => asset('branding/logo-cctv.png'),
+            ]);
+    }
+
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'title' => 'Oferta noua',
+            'message' => 'Ai primit oferta „'.$this->offer->title.'”.',
+            'offer_id' => $this->offer->id,
+        ];
     }
 }
