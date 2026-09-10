@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 
 const props = defineProps({
     offer: Object,
+    profitability: Object,
 });
 
 const statusOptions = [
@@ -102,6 +103,19 @@ function destroy() {
                 </div>
 
                 <div class="space-y-6 lg:col-span-2">
+                    <div class="rounded-lg p-5 shadow-sm" :class="profitability.margin_percent < profitability.minimum_margin_percent ? 'border border-red-200 bg-red-50' : 'border border-emerald-200 bg-emerald-50'">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold" :class="profitability.margin_percent < profitability.minimum_margin_percent ? 'text-red-800' : 'text-emerald-800'">Profitabilitate estimata</h3>
+                            <span class="text-lg font-bold" :class="profitability.margin_percent < profitability.minimum_margin_percent ? 'text-red-700' : 'text-emerald-700'">{{ money(profitability.margin_percent) }}% marja</span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-3 gap-3 text-sm">
+                            <div><div class="text-slate-500">Cost estimat</div><strong>{{ money(profitability.estimated_cost) }} lei</strong></div>
+                            <div><div class="text-slate-500">Profit estimat</div><strong>{{ money(profitability.estimated_profit) }} lei</strong></div>
+                            <div><div class="text-slate-500">Prag minim</div><strong>{{ money(profitability.minimum_margin_percent) }}%</strong></div>
+                        </div>
+                        <p v-if="profitability.uncosted_items" class="mt-3 text-sm text-amber-800">Atentie: {{ profitability.uncosted_items }} articol(e) nu au cost configurat.</p>
+                        <p v-if="profitability.margin_percent < profitability.minimum_margin_percent" class="mt-2 text-sm font-medium text-red-700">Oferta este sub marja minima configurata. Verifica pretul inainte de acceptare.</p>
+                    </div>
                     <div class="rounded-lg bg-white p-6 shadow-sm">
                         <h3 class="text-sm font-semibold text-slate-500">Produse / servicii</h3>
                         <table class="mt-4 min-w-full divide-y divide-slate-200">

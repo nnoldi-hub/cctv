@@ -31,6 +31,7 @@ class SettingsController extends Controller
             'social_linkedin' => ['nullable', 'url', 'max:255'],
             'invoice_series' => ['required', 'string', 'max:20'],
             'vat_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
+            'minimum_profit_margin' => ['required', 'numeric', 'min:0', 'max:100'],
         ]);
 
         Setting::setMany($data);

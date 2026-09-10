@@ -20,6 +20,7 @@ class Setting extends Model
         'social_linkedin' => '',
         'invoice_series' => 'CCTV',
         'vat_percentage' => '19',
+        'minimum_profit_margin' => '20',
     ];
 
     public static function get(string $key, ?string $default = null): ?string

@@ -97,10 +97,11 @@ class OfferController extends Controller
 
     public function show(Offer $offer): Response
     {
-        $offer->load(['client', 'user:id,name', 'items.equipment:id,name']);
+        $offer->load(['client', 'user:id,name', 'items.equipment:id,name,cost_price', 'items.service:id,name,cost_price']);
 
         return Inertia::render('Sales/Offers/Show', [
             'offer' => $offer,
+            'profitability' => $offer->profitability_report,
         ]);
     }
 
@@ -158,7 +159,12 @@ class OfferController extends Controller
             }
         }
 
-        return back()->with('success', 'Status oferta actualizat.');
+        $message = 'Status oferta actualizat.';
+        if ($data['status'] === 'accepted' && $offer->profitability_report['margin_percent'] < $offer->profitability_report['minimum_margin_percent']) {
+            $message .= ' Atentie: marja estimata este sub pragul configurat.';
+        }
+
+        return back()->with('success', $message);
     }
 
     private function notifySentOffer(Offer $offer, User $sender): void

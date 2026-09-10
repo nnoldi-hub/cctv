@@ -52,6 +52,32 @@ class OfferCrudTest extends TestCase
         $this->assertCount(2, $offer->items);
     }
 
+    public function test_offer_show_displays_estimated_profitability(): void
+    {
+        $client = Client::factory()->create();
+        $equipment = Equipment::factory()->create(['cost_price' => 100, 'unit_price' => 200]);
+        $offer = Offer::factory()->create([
+            'client_id' => $client->id,
+            'user_id' => $this->salesUser->id,
+            'total_amount' => 200,
+        ]);
+        $offer->items()->create([
+            'equipment_id' => $equipment->id,
+            'description' => $equipment->name,
+            'quantity' => 1,
+            'unit_price' => 200,
+        ]);
+
+        $this->actingAs($this->salesUser)
+            ->get(route('sales.offers.show', $offer))
+            ->assertInertia(fn ($page) => $page
+                ->component('Sales/Offers/Show')
+                ->where('profitability.estimated_cost', 100)
+                ->where('profitability.estimated_profit', 100)
+                ->where('profitability.margin_percent', 50)
+            );
+    }
+
     public function test_offer_requires_at_least_one_item(): void
     {
         $client = Client::factory()->create();
