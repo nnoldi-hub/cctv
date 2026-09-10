@@ -19,14 +19,18 @@ class Invoice extends Model
         'fgo_synced_at',
         'fgo_error',
         'amount',
+        'paid_amount',
         'status',
         'issued_at',
         'due_at',
         'paid_at',
+        'payment_method',
+        'payment_reference',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'issued_at' => 'date',
         'due_at' => 'date',
         'paid_at' => 'date',

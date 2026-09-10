@@ -59,6 +59,37 @@ class InvoiceCrudTest extends TestCase
         $invoice->refresh();
         $this->assertEquals('paid', $invoice->status);
         $this->assertNotNull($invoice->paid_at);
+        $this->assertEquals((float) $invoice->amount, (float) $invoice->paid_amount);
+    }
+
+    public function test_admin_can_record_payment_details(): void
+    {
+        $invoice = Invoice::factory()->create(['amount' => 1200, 'status' => 'unpaid']);
+
+        $this->actingAs($this->adminUser)
+            ->patch(route('admin.invoices.pay', $invoice), [
+                'paid_amount' => 1200,
+                'payment_method' => 'transfer',
+                'payment_reference' => 'OP-123',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('invoices', [
+            'id' => $invoice->id,
+            'status' => 'paid',
+            'paid_amount' => 1200,
+            'payment_method' => 'transfer',
+            'payment_reference' => 'OP-123',
+        ]);
+    }
+
+    public function test_overdue_unpaid_invoices_are_marked_overdue_when_listed(): void
+    {
+        $invoice = Invoice::factory()->create(['status' => 'unpaid', 'due_at' => now()->subDay()]);
+
+        $this->actingAs($this->adminUser)->get(route('admin.invoices.index'))->assertOk();
+
+        $this->assertDatabaseHas('invoices', ['id' => $invoice->id, 'status' => 'overdue']);
     }
 
     public function test_invoice_pdf_can_be_downloaded(): void

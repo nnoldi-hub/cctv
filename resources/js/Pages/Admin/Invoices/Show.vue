@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 
 const props = defineProps({
     invoice: Object,
@@ -19,8 +19,14 @@ function money(value) {
 }
 
 function markPaid() {
-    router.patch(route('admin.invoices.pay', props.invoice.id), {}, { preserveScroll: true });
+    paymentForm.patch(route('admin.invoices.pay', props.invoice.id), { preserveScroll: true });
 }
+
+const paymentForm = useForm({
+    paid_amount: Number(props.invoice.amount),
+    payment_method: '',
+    payment_reference: '',
+});
 
 function syncFgo() {
     router.post(route('admin.invoices.fgo-sync', props.invoice.id), {}, { preserveScroll: true });
@@ -92,6 +98,10 @@ function destroy() {
                             <dt class="text-slate-400">Data platii</dt>
                             <dd class="text-slate-900">{{ new Date(invoice.paid_at).toLocaleDateString('ro-RO') }}</dd>
                         </div>
+                        <div v-if="invoice.paid_at">
+                            <dt class="text-slate-400">Metoda platii</dt>
+                            <dd class="text-slate-900">{{ invoice.payment_method || '-' }}</dd>
+                        </div>
                     </dl>
 
                     <div class="mt-6 rounded-md border border-slate-200 bg-slate-50 p-4">
@@ -116,13 +126,22 @@ function destroy() {
                         </button>
                     </div>
 
-                    <button
-                        v-if="invoice.status === 'unpaid'"
-                        class="mt-6 w-full rounded-md bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-500"
-                        @click="markPaid"
-                    >
-                        Marcheaza ca platita
-                    </button>
+                    <div v-if="['unpaid', 'overdue'].includes(invoice.status)" class="mt-6 space-y-3 rounded-md border border-green-200 bg-green-50 p-4">
+                        <div class="text-sm font-semibold text-green-800">Inregistreaza plata</div>
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <input v-model.number="paymentForm.paid_amount" type="number" min="0" step="0.01" placeholder="Suma platita" class="rounded-md border-slate-300 text-sm" />
+                            <select v-model="paymentForm.payment_method" class="rounded-md border-slate-300 text-sm">
+                                <option value="">Metoda plata</option>
+                                <option value="transfer">Transfer bancar</option>
+                                <option value="card">Card</option>
+                                <option value="cash">Numerar</option>
+                            </select>
+                            <input v-model="paymentForm.payment_reference" type="text" placeholder="Referinta plata" class="rounded-md border-slate-300 text-sm" />
+                        </div>
+                        <button class="w-full rounded-md bg-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-500" @click="markPaid">
+                            Salveaza plata
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

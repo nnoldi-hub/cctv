@@ -30,6 +30,7 @@ class InvoiceController extends Controller
 
     public function index(Request $request): Response
     {
+        $this->markOverdueInvoices();
         $invoices = Invoice::query()
             ->with('client:id,name')
             ->when($request->string('search')->toString(), function ($query, $search) {
@@ -49,7 +50,7 @@ class InvoiceController extends Controller
             'summary' => [
                 'unpaid' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
                 'paid' => (float) Invoice::where('status', 'paid')->sum('amount'),
-                'overdue' => Invoice::where('status', 'unpaid')->where('due_at', '<', now())->count(),
+                'overdue' => Invoice::where('status', 'overdue')->count(),
             ],
         ]);
     }
@@ -79,6 +80,8 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice): Response
     {
+        $this->markOverdueInvoices();
+        $invoice->refresh();
         $invoice->load(['client', 'offer']);
 
         return Inertia::render('Admin/Invoices/Show', [
@@ -104,7 +107,19 @@ class InvoiceController extends Controller
 
     public function markPaid(Invoice $invoice): RedirectResponse
     {
-        $invoice->update(['status' => 'paid', 'paid_at' => now()]);
+        $data = request()->validate([
+            'paid_amount' => ['nullable', 'numeric', 'min:0', 'max:'.$invoice->amount],
+            'payment_method' => ['nullable', 'string', 'max:50'],
+            'payment_reference' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $invoice->update([
+            'status' => 'paid',
+            'paid_amount' => $data['paid_amount'] ?? $invoice->amount,
+            'paid_at' => now(),
+            'payment_method' => $data['payment_method'] ?? null,
+            'payment_reference' => $data['payment_reference'] ?? null,
+        ]);
 
         return back()->with('success', 'Factura marcata ca platita.');
     }
@@ -157,5 +172,14 @@ class InvoiceController extends Controller
             'issued_at' => ['nullable', 'date'],
             'due_at' => ['nullable', 'date'],
         ]);
+    }
+
+    private function markOverdueInvoices(): void
+    {
+        Invoice::query()
+            ->where('status', 'unpaid')
+            ->whereNotNull('due_at')
+            ->whereDate('due_at', '<', today())
+            ->update(['status' => 'overdue']);
     }
 }
