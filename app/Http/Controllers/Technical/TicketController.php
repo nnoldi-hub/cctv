@@ -90,9 +90,7 @@ class TicketController extends Controller
             'type' => 'status',
             'description' => 'Status actualizat la: '.$data['status'].'.',
         ]);
-        if ($ticket->client->user) {
-            Notification::send($ticket->client->user, new TicketUpdated($ticket, 'Statusul cererii a fost actualizat la '.$data['status'].'.'));
-        }
+        $this->notifyClient($ticket, 'Statusul cererii a fost actualizat la '.$data['status'].'.');
         if ($ticket->client->phone) {
             $sms->send($ticket->client->phone, "CCTV: Cererea #{$ticket->id} are statusul {$data['status']}.");
         }
@@ -115,9 +113,7 @@ class TicketController extends Controller
             'type' => 'comment',
             'description' => 'Răspuns adăugat: '.$data['body'],
         ]);
-        if ($ticket->client->user) {
-            Notification::send($ticket->client->user, new TicketUpdated($ticket, 'Ai primit un răspuns nou la cererea ta.'));
-        }
+        $this->notifyClient($ticket, 'Ai primit un răspuns nou la cererea ta.');
         if ($ticket->client->phone) {
             $sms->send($ticket->client->phone, "CCTV: Ai primit un raspuns la cererea #{$ticket->id}.");
         }
@@ -143,5 +139,15 @@ class TicketController extends Controller
             'priority' => ['required', 'in:low,medium,high'],
             'status' => ['required', 'in:open,in_progress,resolved,closed'],
         ]);
+    }
+
+    private function notifyClient(Ticket $ticket, string $message): void
+    {
+        if ($ticket->client->user) {
+            $ticket->client->user->notify(new TicketUpdated($ticket, $message));
+        } elseif ($ticket->client->email && config('notifications.mail_enabled')) {
+            Notification::route('mail', $ticket->client->email)
+                ->notify(new TicketUpdated($ticket, $message));
+        }
     }
 }

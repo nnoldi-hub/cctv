@@ -31,7 +31,7 @@ function setStatus(status) {
 }
 
 function sendOffer() {
-    const action = offer.status === 'sent' ? 'Retrimite oferta' : 'Trimite oferta';
+    const action = props.offer.status === 'sent' ? 'Retrimite oferta' : 'Trimite oferta';
     if (confirm(`${action}? Clientul va primi o noua notificare.`)) {
         setStatus('sent');
     }
