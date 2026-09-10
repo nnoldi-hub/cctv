@@ -4,6 +4,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
     equipment: Object,
+    suppliers: Array,
 });
 
 const form = useForm({
@@ -13,6 +14,8 @@ const form = useForm({
     unit: props.equipment.unit,
     unit_price: Number(props.equipment.unit_price),
     cost_price: Number(props.equipment.cost_price ?? 0),
+    markup_percent: Number(props.equipment.markup_percent ?? 0),
+    supplier_id: props.equipment.supplier_id ?? '',
     stock_quantity: props.equipment.stock_quantity,
     description: props.equipment.description,
     is_active: props.equipment.is_active ?? true,
@@ -50,6 +53,17 @@ function submit() {
                                 <option value="accessory">Accesoriu</option>
                                 <option value="other">Altele</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Furnizor</label>
+                            <select v-model="form.supplier_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm">
+                                <option value="">Fara furnizor</option>
+                                <option v-for="supplier in props.suppliers" :key="supplier.id" :value="supplier.id">{{ supplier.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Adaos (%)</label>
+                            <input v-model.number="form.markup_percent" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700">SKU</label>

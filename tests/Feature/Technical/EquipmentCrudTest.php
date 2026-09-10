@@ -3,9 +3,11 @@
 namespace Tests\Feature\Technical;
 
 use App\Models\Equipment;
+use App\Models\Supplier;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class EquipmentCrudTest extends TestCase
@@ -86,5 +88,36 @@ class EquipmentCrudTest extends TestCase
             ->component('Technical/Equipment/Index')
             ->has('equipment.data', 1)
         );
+    }
+
+    public function test_technician_can_import_supplier_catalog_with_markup(): void
+    {
+        $supplier = Supplier::create(['name' => 'Furnizor test']);
+        $file = UploadedFile::fake()->createWithContent(
+            'catalog.csv',
+            "name,cost_price,sku,category,unit,stock\nCamera 4K,100,CAM-4K,camera,buc,7\n",
+        );
+
+        $this->actingAs($this->techUser)
+            ->post(route('technical.suppliers.import'), [
+                'supplier_id' => $supplier->id,
+                'file' => $file,
+                'markup_percent' => 30,
+                'name_column' => 'name',
+                'cost_column' => 'cost_price',
+                'sku_column' => 'sku',
+                'category_column' => 'category',
+                'unit_column' => 'unit',
+                'stock_column' => 'stock',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('equipment', [
+            'supplier_id' => $supplier->id,
+            'sku' => 'CAM-4K',
+            'cost_price' => 100,
+            'unit_price' => 130,
+            'markup_percent' => 30,
+        ]);
     }
 }

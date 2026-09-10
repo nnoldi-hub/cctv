@@ -47,6 +47,9 @@ function destroy(item) {
                 <Link :href="route('technical.equipment.create')" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500">
                     Echipament nou
                 </Link>
+                <Link :href="route('technical.suppliers.index')" class="ml-2 rounded-md bg-slate-700 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-600">
+                    Furnizori / Import
+                </Link>
             </div>
         </template>
 
@@ -76,7 +79,7 @@ function destroy(item) {
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Nume</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Categorie</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">Pret unitar</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">Pret vanzare / cost</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium uppercase text-slate-500">Stoc</th>
                                 <th class="px-4 py-3"></th>
                             </tr>
@@ -88,7 +91,11 @@ function destroy(item) {
                                     <div class="text-xs text-slate-400">{{ item.sku }}</div>
                                 </td>
                                 <td class="px-4 py-3 text-sm capitalize text-slate-600">{{ item.category }}</td>
-                                <td class="px-4 py-3 text-right text-sm text-slate-900">{{ money(item.unit_price) }} lei / {{ item.unit }}</td>
+                                <td class="px-4 py-3 text-right text-sm text-slate-900">
+                                    {{ money(item.unit_price) }} / {{ money(item.cost_price) }} lei
+                                    <div class="text-xs text-emerald-600">Adaos {{ money(item.markup_percent) }}%</div>
+                                    <div v-if="item.supplier" class="text-xs text-slate-400">{{ item.supplier.name }}</div>
+                                </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-center gap-2">
                                         <button class="rounded border border-slate-300 px-2 text-slate-500 hover:bg-slate-100" @click="adjustStock(item, -1)">-</button>

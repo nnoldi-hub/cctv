@@ -22,6 +22,8 @@ class Equipment extends Model
         'description',
         'is_active',
         'client_id',
+        'supplier_id',
+        'markup_percent',
         'location',
         'warranty_until',
         'installed_at',
@@ -30,6 +32,7 @@ class Equipment extends Model
     protected $casts = [
         'unit_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'markup_percent' => 'decimal:2',
         'is_active' => 'boolean',
         'warranty_until' => 'date',
         'installed_at' => 'date',
@@ -43,5 +46,15 @@ class Equipment extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function getProfitAmountAttribute(): float
+    {
+        return (float) $this->unit_price - (float) $this->cost_price;
     }
 }

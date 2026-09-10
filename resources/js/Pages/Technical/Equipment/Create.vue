@@ -9,10 +9,13 @@ const form = useForm({
     unit: 'buc',
     unit_price: 0,
     cost_price: 0,
+    markup_percent: 0,
+    supplier_id: '',
     stock_quantity: 0,
     description: '',
     is_active: true,
 });
+const props = defineProps({ suppliers: Array });
 
 function submit() {
     form.post(route('technical.equipment.store'));
@@ -46,6 +49,17 @@ function submit() {
                                 <option value="accessory">Accesoriu</option>
                                 <option value="other">Altele</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Furnizor</label>
+                            <select v-model="form.supplier_id" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm">
+                                <option value="">Fara furnizor</option>
+                                <option v-for="supplier in props.suppliers" :key="supplier.id" :value="supplier.id">{{ supplier.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Adaos (%)</label>
+                            <input v-model.number="form.markup_percent" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700">SKU</label>
