@@ -54,10 +54,12 @@ class PortalController extends Controller
             'type' => 'created',
             'description' => 'Cerere trimisă de client.',
         ]);
-        $recipients = $ticket->client->user;
-        if ($recipients) {
-            Notification::send($recipients, new TicketUpdated($ticket, 'Cererea ta a fost înregistrată și va fi preluată de echipa noastră.'));
+        $clientUser = $ticket->client->user;
+        if ($clientUser) {
+            Notification::send($clientUser, new TicketUpdated($ticket, 'Cererea ta a fost înregistrată și va fi preluată de echipa noastră.'));
         }
+        $staff = \App\Models\User::role(['admin', 'tehnic', 'suport'])->get();
+        Notification::send($staff, new TicketUpdated($ticket, 'A fost creată o cerere nouă de către '.$ticket->client->name.'.'));
         if ($ticket->client->phone) {
             $sms->send($ticket->client->phone, "CCTV: Cererea #{$ticket->id} a fost inregistrata.");
         }

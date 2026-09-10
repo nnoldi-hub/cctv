@@ -232,6 +232,13 @@ const mobileOpen = ref(false);
                 <div class="hidden flex-1 sm:block">
                     <GlobalSearch />
                 </div>
+                <Link
+                    v-if="page.props.auth.unreadNotifications"
+                    :href="route('technical.tickets.index')"
+                    class="rounded-md bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100"
+                >
+                    {{ page.props.auth.unreadNotifications }} notificări noi
+                </Link>
             </div>
 
             <header v-if="$slots.header" class="flex-shrink-0 bg-white shadow-sm">

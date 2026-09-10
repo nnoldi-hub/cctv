@@ -19,7 +19,7 @@ class TicketUpdated extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return config('notifications.mail_enabled') ? ['database', 'mail'] : ['database'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -29,7 +29,12 @@ class TicketUpdated extends Notification
             ->greeting('Buna, '.$notifiable->name.'!')
             ->line($this->message)
             ->line('Cerere: '.$this->ticket->subject)
-            ->action('Vezi portalul client', route('client.tickets.index'))
+            ->action(
+                $notifiable->hasAnyRole(['client', 'client-manager']) ? 'Vezi portalul client' : 'Vezi tichetele',
+                $notifiable->hasAnyRole(['client', 'client-manager'])
+                    ? route('client.tickets.index')
+                    : route('technical.tickets.show', $this->ticket),
+            )
             ->salutation('Cu stima, echipa CCTV Security');
     }
 
