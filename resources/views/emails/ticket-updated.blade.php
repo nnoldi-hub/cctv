@@ -21,7 +21,7 @@
                                 Buna, {{ $recipientName }}!
                             </p>
                             <p style="margin:0 0 18px;font-size:16px;line-height:1.6;color:#4b5563;">
-                                {{ $message }}
+                                {{ $notificationMessage }}
                             </p>
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:22px 0;background:#f8fafc;border-left:4px solid #f59e0b;">
                                 <tr>

@@ -30,7 +30,7 @@ class TicketUpdated extends Notification
             ->subject('Actualizare cerere #'.$this->ticket->id)
             ->view('emails.ticket-updated', [
                 'recipientName' => $notifiable->name,
-                'message' => $this->message,
+                'notificationMessage' => $this->message,
                 'ticket' => $this->ticket,
                 'actionLabel' => $isClient ? 'Vezi portalul client' : 'Vezi tichetele',
                 'actionUrl' => $isClient
