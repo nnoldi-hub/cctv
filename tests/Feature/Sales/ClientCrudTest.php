@@ -3,6 +3,8 @@
 namespace Tests\Feature\Sales;
 
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -117,5 +119,23 @@ class ClientCrudTest extends TestCase
         $this->actingAs($this->salesUser)
             ->get(route('sales.clients.export'))
             ->assertOk();
+    }
+
+    public function test_client_page_includes_invoice_financial_statement(): void
+    {
+        $client = Client::factory()->create();
+        $invoice = Invoice::factory()->create(['client_id' => $client->id, 'amount' => 1000, 'paid_amount' => 300, 'status' => 'unpaid']);
+        InvoicePayment::create(['invoice_id' => $invoice->id, 'amount' => 300, 'payment_method' => 'transfer', 'paid_at' => now()]);
+
+        $this->actingAs($this->salesUser)
+            ->get(route('sales.clients.show', $client))
+            ->assertInertia(fn ($page) => $page
+                ->component('Sales/Clients/Show')
+                ->where('summary.invoiceTotal', 1000)
+                ->where('summary.invoicePaid', 300)
+                ->where('summary.invoiceBalance', 700)
+                ->where('summary.overdueInvoices', 0)
+                ->where('client.invoices.0.payments.0.amount', '300.00')
+            );
     }
 }

@@ -114,6 +114,15 @@ function money(value) {
                             <div class="mt-1 text-lg font-semibold text-slate-900">{{ money(summary.invoiceTotal) }} lei</div>
                         </div>
                         <div class="rounded-lg bg-white p-4 shadow-sm">
+                            <div class="text-xs text-slate-500">Total achitat</div>
+                            <div class="mt-1 text-lg font-semibold text-green-600">{{ money(summary.invoicePaid) }} lei</div>
+                        </div>
+                        <div class="rounded-lg bg-white p-4 shadow-sm">
+                            <div class="text-xs text-slate-500">Sold client</div>
+                            <div class="mt-1 text-lg font-semibold" :class="summary.invoiceBalance > 0 ? 'text-red-600' : 'text-slate-900'">{{ money(summary.invoiceBalance) }} lei</div>
+                            <div v-if="summary.overdueInvoices" class="text-xs text-red-500">{{ summary.overdueInvoices }} facturi restante</div>
+                        </div>
+                        <div class="rounded-lg bg-white p-4 shadow-sm">
                             <div class="text-xs text-slate-500">Activitati in asteptare</div>
                             <div class="mt-1 text-lg font-semibold text-slate-900">{{ summary.pendingActivities }}</div>
                         </div>
@@ -206,10 +215,18 @@ function money(value) {
                     </div>
 
                     <div class="rounded-lg bg-white p-6 shadow-sm">
-                        <h3 class="text-sm font-semibold text-slate-500">Facturi ({{ client.invoices.length }})</h3>
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-500">Facturi ({{ client.invoices.length }})</h3>
+                            <Link v-if="canAdmin" :href="route('admin.invoices.create', { client_id: client.id })" class="text-sm font-medium text-blue-600 hover:text-blue-500">Factura noua</Link>
+                        </div>
                         <div v-if="client.invoices.length" class="mt-4 divide-y divide-slate-100">
                             <div v-for="invoice in client.invoices" :key="invoice.id" class="flex items-center justify-between py-3">
-                                <div class="font-medium text-slate-900">{{ invoice.invoice_number }}</div>
+                                <div>
+                                    <Link v-if="canAdmin" :href="route('admin.invoices.show', invoice.id)" class="font-medium text-blue-600">{{ invoice.invoice_number }}</Link>
+                                    <div v-else class="font-medium text-slate-900">{{ invoice.invoice_number }}</div>
+                                    <div class="text-xs text-slate-400">Achitat {{ money(invoice.paid_amount) }} lei · Sold {{ money(Math.max(Number(invoice.amount) - Number(invoice.paid_amount), 0)) }} lei</div>
+                                    <div v-if="invoice.payments?.length" class="text-xs text-slate-400">{{ invoice.payments.length }} plati inregistrate</div>
+                                </div>
                                 <div class="flex items-center gap-3">
                                     <span class="text-sm font-semibold text-slate-900">{{ money(invoice.amount) }} lei</span>
                                     <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium capitalize text-slate-600">
