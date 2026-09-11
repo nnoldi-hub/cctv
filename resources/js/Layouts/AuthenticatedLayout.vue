@@ -37,6 +37,7 @@ const sections = [
         items: [
             { name: 'Echipamente', route: 'technical.equipment.index', roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
             { name: 'Furnizori / Import materiale', route: 'technical.suppliers.index', roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
+            { name: 'Comenzi furnizori', route: 'technical.purchase-orders.index', roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
             { name: 'Servicii', route: 'technical.services.index', roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
             { name: 'Stoc scazut', route: 'technical.equipment.index', query: { low_stock: 1 }, roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
             { name: 'Instalari', route: 'technical.installations.index', roles: ['admin', 'tehnic'], permissions: ['installations.view', 'installations.manage'] },

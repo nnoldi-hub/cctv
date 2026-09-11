@@ -6,6 +6,7 @@ use App\Http\Controllers\Technical\InstallationController;
 use App\Http\Controllers\Technical\TicketController;
 use App\Http\Controllers\Technical\ServiceController;
 use App\Http\Controllers\Technical\SupplierController;
+use App\Http\Controllers\Technical\PurchaseOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('tehnic')->name('technical.')->group(function () {
@@ -26,6 +27,8 @@ Route::middleware(['auth', 'verified'])->prefix('tehnic')->name('technical.')->g
         Route::get('/furnizori', [SupplierController::class, 'index'])->name('suppliers.index');
         Route::post('/furnizori', [SupplierController::class, 'store'])->name('suppliers.store');
         Route::post('/furnizori/import', [SupplierController::class, 'import'])->name('suppliers.import');
+        Route::resource('comenzi-furnizori', PurchaseOrderController::class)->only(['index', 'create', 'store'])->parameters(['comenzi-furnizori' => 'purchaseOrder'])->names('purchase-orders');
+        Route::patch('/comenzi-furnizori/{purchaseOrder}/receptioneaza', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
     });
 
     Route::middleware('role_or_permission:admin|tehnic|installations.view|installations.manage')->group(function () {
