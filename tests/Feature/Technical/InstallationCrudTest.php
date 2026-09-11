@@ -97,9 +97,51 @@ class InstallationCrudTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Technical/Installations/Calendar')
+                ->where('view', 'day')
                 ->where('date', '2026-09-11')
                 ->has('installations', 1)
                 ->where('installations.0.id', $installation->id)
+            );
+    }
+
+    public function test_technician_can_view_weekly_installation_calendar(): void
+    {
+        $inWeek = Installation::factory()->create([
+            'scheduled_at' => '2026-09-10 09:30:00',
+            'status' => 'scheduled',
+        ]);
+        Installation::factory()->create([
+            'scheduled_at' => '2026-09-20 09:30:00',
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->actingAs($this->techUser)
+            ->get(route('technical.installations.calendar', ['date' => '2026-09-11', 'view' => 'week']));
+
+        $response->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Technical/Installations/Calendar')
+                ->where('view', 'week')
+                ->has('days', 7)
+                ->where('installations.0.id', $inWeek->id)
+            );
+    }
+
+    public function test_technician_can_view_monthly_installation_calendar(): void
+    {
+        Installation::factory()->create([
+            'scheduled_at' => '2026-09-15 09:30:00',
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->actingAs($this->techUser)
+            ->get(route('technical.installations.calendar', ['date' => '2026-09-01', 'view' => 'month']));
+
+        $response->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Technical/Installations/Calendar')
+                ->where('view', 'month')
+                ->has('installations', 1)
             );
     }
 

@@ -45,19 +45,49 @@ class InstallationController extends Controller
 
     public function calendar(Request $request): Response
     {
-        $date = $request->date('date')?->toDateString() ?? today()->toDateString();
+        $view = in_array($request->string('view')->toString(), ['day', 'week', 'month'], true)
+            ? $request->string('view')->toString()
+            : 'day';
+        $date = $request->date('date') ?? today();
         $technicianId = $request->integer('technician_id') ?: null;
 
+        [$rangeStart, $rangeEnd] = match ($view) {
+            'week' => [$date->copy()->startOfWeek(), $date->copy()->endOfWeek()],
+            'month' => [$date->copy()->startOfMonth()->startOfWeek(), $date->copy()->endOfMonth()->endOfWeek()],
+            default => [$date->copy()->startOfDay(), $date->copy()->endOfDay()],
+        };
+
+        $installations = Installation::with(['client:id,name', 'technician:id,name'])
+            ->whereBetween('scheduled_at', [$rangeStart, $rangeEnd])
+            ->when($technicianId, fn ($query, $id) => $query->where('technician_id', $id))
+            ->whereNotIn('status', ['cancelled'])
+            ->orderBy('scheduled_at')
+            ->get(['id', 'client_id', 'technician_id', 'type', 'address', 'scheduled_at', 'status']);
+
+        $days = collect();
+        $cursor = $rangeStart->copy()->startOfDay();
+        $endCursor = $rangeEnd->copy()->startOfDay();
+
+        while ($cursor->lte($endCursor)) {
+            $dayKey = $cursor->toDateString();
+            $days->push([
+                'date' => $dayKey,
+                'inMonth' => $view !== 'month' || $cursor->isSameMonth($date),
+                'isToday' => $cursor->isToday(),
+                'installations' => $installations->filter(fn ($installation) => $installation->scheduled_at->isSameDay($cursor))->values(),
+            ]);
+            $cursor->addDay();
+        }
+
         return Inertia::render('Technical/Installations/Calendar', [
-            'date' => $date,
+            'view' => $view,
+            'date' => $date->toDateString(),
+            'rangeStart' => $rangeStart->toDateString(),
+            'rangeEnd' => $rangeEnd->toDateString(),
             'technicianId' => $technicianId,
             'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
-            'installations' => Installation::with(['client:id,name', 'technician:id,name'])
-                ->whereDate('scheduled_at', $date)
-                ->when($technicianId, fn ($query, $id) => $query->where('technician_id', $id))
-                ->whereNotIn('status', ['cancelled'])
-                ->orderBy('scheduled_at')
-                ->get(['id', 'client_id', 'technician_id', 'type', 'address', 'scheduled_at', 'status']),
+            'days' => $days,
+            'installations' => $installations,
         ]);
     }
 
