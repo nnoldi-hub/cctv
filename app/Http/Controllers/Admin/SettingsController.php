@@ -32,7 +32,10 @@ class SettingsController extends Controller
             'invoice_series' => ['required', 'string', 'max:20'],
             'vat_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'minimum_profit_margin' => ['required', 'numeric', 'min:0', 'max:100'],
+            'operational_reminders_email_enabled' => ['nullable', 'boolean'],
         ]);
+
+        $data['operational_reminders_email_enabled'] = $request->boolean('operational_reminders_email_enabled') ? '1' : '0';
 
         Setting::setMany($data);
 

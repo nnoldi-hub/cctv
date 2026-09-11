@@ -21,6 +21,7 @@ class Setting extends Model
         'invoice_series' => 'CCTV',
         'vat_percentage' => '19',
         'minimum_profit_margin' => '20',
+        'operational_reminders_email_enabled' => '0',
     ];
 
     public static function get(string $key, ?string $default = null): ?string

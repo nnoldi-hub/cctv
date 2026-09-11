@@ -20,6 +20,7 @@ const form = useForm({
     invoice_series: props.settings.invoice_series,
     vat_percentage: Number(props.settings.vat_percentage),
     minimum_profit_margin: Number(props.settings.minimum_profit_margin),
+    operational_reminders_email_enabled: props.settings.operational_reminders_email_enabled === '1',
 });
 
 function submit() {
@@ -91,6 +92,21 @@ function submit() {
                             <label class="block text-sm font-medium text-slate-700">Marja minima profit (%)</label>
                             <input v-model.number="form.minimum_profit_margin" type="number" min="0" max="100" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
                             <p class="mt-1 text-xs text-slate-500">Pragul pentru avertizarea ofertelor cu profit redus.</p>
+                        </div>
+                        <div class="sm:col-span-2 border-t border-slate-200 pt-5">
+                            <h3 class="text-sm font-semibold text-slate-900">Notificari</h3>
+                        </div>
+                        <div class="sm:col-span-2 flex items-start gap-3">
+                            <input
+                                id="operational_reminders_email_enabled"
+                                v-model="form.operational_reminders_email_enabled"
+                                type="checkbox"
+                                class="mt-1 rounded border-slate-300 text-blue-600 shadow-sm focus:ring-blue-500"
+                            />
+                            <label for="operational_reminders_email_enabled" class="text-sm text-slate-700">
+                                Trimite si pe email notificarile operationale (facturi restante, programari de maine, stoc sub prag)
+                                <p class="mt-1 text-xs text-slate-500">Notificarile raman intotdeauna vizibile in aplicatie; aceasta optiune trimite suplimentar un email catre utilizatorii vizati.</p>
+                            </label>
                         </div>
                     </div>
                     <div class="flex justify-end">
