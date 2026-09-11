@@ -46,6 +46,33 @@ class InstallationCrudTest extends TestCase
         $this->assertFalse($installation->checklist[0]['done']);
     }
 
+    public function test_technician_cannot_be_scheduled_twice_at_the_same_time(): void
+    {
+        $client = Client::factory()->create();
+        $technician = User::factory()->create();
+        $technician->assignRole('tehnic');
+
+        Installation::factory()->create([
+            'client_id' => $client->id,
+            'technician_id' => $technician->id,
+            'scheduled_at' => '2026-09-15 10:00:00',
+            'status' => 'scheduled',
+        ]);
+
+        $response = $this->actingAs($this->techUser)->post(route('technical.installations.store'), [
+            'client_id' => $client->id,
+            'technician_id' => $technician->id,
+            'type' => 'interventie',
+            'scheduled_at' => '2026-09-15 10:00:00',
+            'status' => 'scheduled',
+            'material_items' => [],
+            'service_items' => [],
+        ]);
+
+        $response->assertSessionHasErrors('scheduled_at');
+        $this->assertDatabaseCount('installations', 1);
+    }
+
     public function test_technician_can_toggle_checklist_item(): void
     {
         $installation = Installation::factory()->create();

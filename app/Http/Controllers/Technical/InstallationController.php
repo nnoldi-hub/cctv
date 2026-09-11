@@ -58,6 +58,7 @@ class InstallationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateData($request);
+        $this->ensureTechnicianAvailability($data);
         $data['checklist'] = Installation::defaultChecklist();
         $data = $this->processExecutionDetails($request, $data);
 
@@ -97,7 +98,9 @@ class InstallationController extends Controller
     public function update(Request $request, Installation $installation): RedirectResponse
     {
         $this->ensureInstallationIsEditable($installation);
-        $data = $this->processExecutionDetails($request, $this->validateData($request), $installation);
+        $data = $this->validateData($request);
+        $this->ensureTechnicianAvailability($data, $installation);
+        $data = $this->processExecutionDetails($request, $data, $installation);
         DB::transaction(function () use ($data, $installation) {
             $installation->update($data);
             if ($installation->status === 'completed') {
@@ -219,6 +222,30 @@ class InstallationController extends Controller
             'technician_signature' => ['nullable', 'image', 'max:5120'],
             'customer_signature' => ['nullable', 'image', 'max:5120'],
         ]);
+    }
+
+    private function ensureTechnicianAvailability(array $data, ?Installation $installation = null): void
+    {
+        if (
+            empty($data['technician_id'])
+            || empty($data['scheduled_at'])
+            || in_array($data['status'], ['completed', 'cancelled'], true)
+        ) {
+            return;
+        }
+
+        $conflict = Installation::query()
+            ->where('technician_id', $data['technician_id'])
+            ->where('scheduled_at', $data['scheduled_at'])
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->when($installation, fn ($query) => $query->where('id', '!=', $installation->getKey()))
+            ->exists();
+
+        if ($conflict) {
+            throw ValidationException::withMessages([
+                'scheduled_at' => 'Tehnicianul are deja o programare activa la aceasta data si ora.',
+            ]);
+        }
     }
 
     private function processExecutionDetails(Request $request, array $data, ?Installation $installation = null): array
