@@ -20,6 +20,9 @@ const form = useForm({
     minimum_stock: props.equipment.minimum_stock ?? 5,
     description: props.equipment.description,
     is_active: props.equipment.is_active ?? true,
+    is_visible_in_shop: props.equipment.is_visible_in_shop ?? false,
+    shop_description: props.equipment.shop_description ?? '',
+    image: null,
 });
 
 function submit() {
@@ -99,6 +102,24 @@ function submit() {
                             <input v-model="form.is_active" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                             Material activ in catalog
                         </label>
+                        <div class="sm:col-span-2 border-t pt-4">
+                            <label class="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                <input v-model="form.is_visible_in_shop" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                Vizibil in magazinul online
+                            </label>
+                            <p class="mt-1 text-xs text-slate-500">Produsul va aparea public in magazin, la pretul de vanzare (unitar).</p>
+                            <p v-if="equipment.slug" class="mt-1 text-xs text-slate-400">URL magazin: /magazin/{{ equipment.slug }}</p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700">Descriere pentru magazin</label>
+                            <textarea v-model="form.shop_description" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Descriere afisata clientilor in magazin (optional, altfel se foloseste descrierea interna)" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <img v-if="equipment.image_path" :src="`/storage/${equipment.image_path}`" alt="" class="mb-2 h-24 w-24 rounded-md object-contain" />
+                            <label class="block text-sm font-medium text-slate-700">Imagine produs</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" @input="form.image = $event.target.files[0]" />
+                            <p v-if="form.errors.image" class="mt-1 text-sm text-red-600">{{ form.errors.image }}</p>
+                        </div>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" :disabled="form.processing" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50">

@@ -23,7 +23,7 @@ function signOut() { logout.post(route('logout')); }
         </header>
         <nav class="border-b bg-white">
             <div class="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 py-2 text-sm sm:px-6 lg:px-8">
-                <Link v-for="item in [{ label: 'Dashboard', route: 'client.dashboard' }, { label: 'Cereri', route: 'client.tickets.index' }, { label: 'Oferte', route: 'client.offers.index' }, { label: 'Lucrari', route: 'client.works.index' }, { label: 'Facturi', route: 'client.invoices.index' }, { label: 'Abonament', route: 'client.subscriptions.index' }, { label: 'Echipamente', route: 'client.equipment.index' }, { label: 'Notificari', route: 'client.notifications.index' }]" :key="item.route" :href="route(item.route)" class="whitespace-nowrap rounded px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-blue-700">{{ item.label }}</Link>
+                <Link v-for="item in [{ label: 'Dashboard', route: 'client.dashboard' }, { label: 'Cereri', route: 'client.tickets.index' }, { label: 'Oferte', route: 'client.offers.index' }, { label: 'Lucrari', route: 'client.works.index' }, { label: 'Facturi', route: 'client.invoices.index' }, { label: 'Abonament', route: 'client.subscriptions.index' }, { label: 'Echipamente', route: 'client.equipment.index' }, { label: 'Comenzile mele', route: 'client.shop-orders.index' }, { label: 'Notificari', route: 'client.notifications.index' }]" :key="item.route" :href="route(item.route)" class="whitespace-nowrap rounded px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-blue-700">{{ item.label }}</Link>
             </div>
         </nav>
         <main><slot /></main>

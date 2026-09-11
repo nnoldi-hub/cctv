@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PageController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\StatController;
 use App\Http\Controllers\Admin\BlogPostController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ShopOrderController;
 use App\Http\Controllers\Admin\SitePackageController;
 use App\Http\Controllers\Admin\SmsLogController;
 use App\Http\Controllers\Admin\SubscriptionController;
@@ -48,4 +50,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('/setari', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/setari', [SettingsController::class, 'update'])->name('settings.update');
+
+    Route::resource('magazin/comenzi', ShopOrderController::class)->only(['index', 'show', 'destroy'])->parameters(['comenzi' => 'shopOrder'])->names('shop-orders');
+    Route::patch('/magazin/comenzi/{shopOrder}/status', [ShopOrderController::class, 'updateStatus'])->name('shop-orders.status');
+    Route::patch('/magazin/comenzi/{shopOrder}/reducere', [ShopOrderController::class, 'applyManualDiscount'])->name('shop-orders.discount');
+    Route::post('/magazin/comenzi/{shopOrder}/factura', [ShopOrderController::class, 'generateInvoice'])->name('shop-orders.invoice');
+
+    Route::resource('magazin/reduceri', DiscountController::class)->except(['show'])->parameters(['reduceri' => 'discount'])->names('discounts');
 });

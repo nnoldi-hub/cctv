@@ -55,6 +55,11 @@ class Client extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function shopOrders(): HasMany
+    {
+        return $this->hasMany(ShopOrder::class);
+    }
+
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);

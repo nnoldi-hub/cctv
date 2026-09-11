@@ -7,6 +7,7 @@ use App\Models\Equipment;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,7 +44,14 @@ class EquipmentController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Equipment::create($this->validateData($request));
+        $data = $this->validateData($request);
+        $data['image_path'] = $this->storeImage($request);
+
+        if ($data['is_visible_in_shop']) {
+            $data['slug'] = $this->uniqueSlug($data['name']);
+        }
+
+        Equipment::create($data);
 
         return redirect()->route('technical.equipment.index')->with('success', 'Echipament adaugat.');
     }
@@ -58,7 +66,17 @@ class EquipmentController extends Controller
 
     public function update(Request $request, Equipment $equipment): RedirectResponse
     {
-        $equipment->update($this->validateData($request));
+        $data = $this->validateData($request);
+
+        if ($image = $this->storeImage($request)) {
+            $data['image_path'] = $image;
+        }
+
+        if ($data['is_visible_in_shop'] && ! $equipment->slug) {
+            $data['slug'] = $this->uniqueSlug($data['name']);
+        }
+
+        $equipment->update($data);
 
         return redirect()->route('technical.equipment.index')->with('success', 'Echipament actualizat.');
     }
@@ -90,6 +108,7 @@ class EquipmentController extends Controller
             'markup_percent' => $request->input('markup_percent', 0),
             'minimum_stock' => $request->input('minimum_stock', 5),
             'is_active' => $request->boolean('is_active', true),
+            'is_visible_in_shop' => $request->boolean('is_visible_in_shop', false),
         ]);
 
         return $request->validate([
@@ -105,6 +124,31 @@ class EquipmentController extends Controller
             'minimum_stock' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
             'is_active' => ['required', 'boolean'],
+            'is_visible_in_shop' => ['required', 'boolean'],
+            'shop_description' => ['nullable', 'string', 'max:2000'],
+            'image' => ['nullable', 'image', 'max:4096'],
         ]);
+    }
+
+    private function storeImage(Request $request): ?string
+    {
+        if (! $request->hasFile('image')) {
+            return null;
+        }
+
+        return $request->file('image')->store('equipment', 'public');
+    }
+
+    private function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name);
+        $slug = $base;
+        $suffix = 1;
+
+        while (Equipment::where('slug', $slug)->exists()) {
+            $slug = $base.'-'.(++$suffix);
+        }
+
+        return $slug;
     }
 }

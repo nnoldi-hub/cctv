@@ -22,6 +22,9 @@ class Setting extends Model
         'vat_percentage' => '19',
         'minimum_profit_margin' => '20',
         'operational_reminders_email_enabled' => '0',
+        'shop_enabled' => '0',
+        'shop_free_shipping_threshold' => '500',
+        'shop_shipping_cost' => '25',
     ];
 
     public static function get(string $key, ?string $default = null): ?string

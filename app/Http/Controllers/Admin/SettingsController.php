@@ -33,9 +33,15 @@ class SettingsController extends Controller
             'vat_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
             'minimum_profit_margin' => ['required', 'numeric', 'min:0', 'max:100'],
             'operational_reminders_email_enabled' => ['nullable', 'boolean'],
+            'shop_enabled' => ['nullable', 'boolean'],
+            'shop_free_shipping_threshold' => ['nullable', 'numeric', 'min:0'],
+            'shop_shipping_cost' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $data['operational_reminders_email_enabled'] = $request->boolean('operational_reminders_email_enabled') ? '1' : '0';
+        $data['shop_enabled'] = $request->boolean('shop_enabled') ? '1' : '0';
+        $data['shop_free_shipping_threshold'] = $data['shop_free_shipping_threshold'] ?? Setting::get('shop_free_shipping_threshold');
+        $data['shop_shipping_cost'] = $data['shop_shipping_cost'] ?? Setting::get('shop_shipping_cost');
 
         Setting::setMany($data);
 

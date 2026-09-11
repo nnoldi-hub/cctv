@@ -209,6 +209,22 @@ class PortalController extends Controller
         return Inertia::render('Client/Equipment/Index', ['equipment' => Equipment::where('client_id', $request->user()->clientProfile->id)->latest()->get()]);
     }
 
+    public function shopOrders(Request $request): Response
+    {
+        $client = $request->user()->clientProfile;
+
+        return Inertia::render('Client/ShopOrders/Index', [
+            'orders' => $client->shopOrders()->with('items')->latest()->paginate(10),
+        ]);
+    }
+
+    public function shopOrderShow(Request $request, int $order): Response
+    {
+        $record = $request->user()->clientProfile->shopOrders()->with(['items', 'invoice'])->findOrFail($order);
+
+        return Inertia::render('Client/ShopOrders/Show', ['order' => $record]);
+    }
+
     public function notifications(Request $request): Response
     {
         return Inertia::render('Client/Notifications/Index', ['notifications' => $request->user()->notifications()->latest()->paginate(20)]);

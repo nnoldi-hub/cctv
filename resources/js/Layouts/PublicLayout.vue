@@ -1,19 +1,30 @@
 <script setup>
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useCart } from '@/cart';
 
 const page = usePage();
 const mobileOpen = ref(false);
+const { itemCount } = useCart();
 
-const nav = [
-    { name: 'Acasa', href: () => route('public.home') },
-    { name: 'Despre noi', href: () => route('public.about') },
-    { name: 'Servicii & pachete', href: () => route('public.services') },
-    { name: 'Configurator', href: () => route('public.configurator') },
-    { name: 'Blog', href: () => route('public.blog.index') },
-    { name: 'Contact', href: () => route('public.contact') },
-];
+const nav = computed(() => {
+    const items = [
+        { name: 'Acasa', href: () => route('public.home') },
+        { name: 'Despre noi', href: () => route('public.about') },
+        { name: 'Servicii & pachete', href: () => route('public.services') },
+        { name: 'Configurator', href: () => route('public.configurator') },
+    ];
+
+    if (page.props.siteSettings?.shop_enabled === '1') {
+        items.push({ name: 'Magazin', href: () => route('public.shop.index') });
+    }
+
+    items.push({ name: 'Blog', href: () => route('public.blog.index') });
+    items.push({ name: 'Contact', href: () => route('public.contact') });
+
+    return items;
+});
 
 const currentYear = new Date().getFullYear();
 const settings = page.props.siteSettings ?? {};
@@ -41,6 +52,14 @@ const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(companyAddre
                 </div>
 
                 <div class="hidden items-center gap-3 lg:flex">
+                    <Link
+                        v-if="page.props.siteSettings?.shop_enabled === '1'"
+                        :href="route('public.shop.cart')"
+                        class="relative rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:text-white"
+                    >
+                        Cos
+                        <span v-if="itemCount > 0" class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">{{ itemCount }}</span>
+                    </Link>
                     <Link
                         v-if="page.props.auth.user"
                         :href="page.props.auth.roles?.includes('client') || page.props.auth.roles?.includes('client-manager') ? route('client.dashboard') : route('dashboard')"
@@ -96,6 +115,14 @@ const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(companyAddre
                     @click="mobileOpen = false"
                 >
                     {{ item.name }}
+                </Link>
+                <Link
+                    v-if="page.props.siteSettings?.shop_enabled === '1'"
+                    :href="route('public.shop.cart')"
+                    class="block py-2 text-sm font-medium text-slate-300 hover:text-white"
+                    @click="mobileOpen = false"
+                >
+                    Cos ({{ itemCount }})
                 </Link>
                 <Link
                     v-if="page.props.auth.user"
