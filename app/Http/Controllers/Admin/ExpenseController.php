@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\Installation;
 use App\Models\Supplier;
+use App\Models\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -64,6 +65,7 @@ class ExpenseController extends Controller
     {
         $expense = Expense::create($this->validateData($request));
         $this->storeDocument($request, $expense);
+        AuditLog::record($request->user(), 'expense.created', "Cheltuiala a fost inregistrata: {$expense->description}.", $expense, ['amount' => (float) $expense->amount, 'category' => $expense->category]);
 
         return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost inregistrata.');
     }
@@ -72,6 +74,7 @@ class ExpenseController extends Controller
     {
         $expense->update($this->validateData($request));
         $this->storeDocument($request, $expense);
+        AuditLog::record($request->user(), 'expense.updated', "Cheltuiala a fost actualizata: {$expense->description}.", $expense, ['amount' => (float) $expense->amount, 'category' => $expense->category]);
 
         return redirect()->route('admin.expenses.index')->with('success', 'Cheltuiala a fost actualizata.');
     }
@@ -91,12 +94,13 @@ class ExpenseController extends Controller
         ]);
     }
 
-    public function destroy(Expense $expense): RedirectResponse
+    public function destroy(Request $request, Expense $expense): RedirectResponse
     {
         if ($expense->document_path) {
             Storage::disk('public')->delete($expense->document_path);
         }
         $expense->delete();
+        AuditLog::record($request->user(), 'expense.deleted', "Cheltuiala a fost stearsa: {$expense->description}.", null, ['expense_id' => $expense->id, 'amount' => (float) $expense->amount]);
 
         return back()->with('success', 'Cheltuiala a fost stearsa.');
     }

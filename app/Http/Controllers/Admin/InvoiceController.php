@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Offer;
 use App\Models\InvoicePayment;
+use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Services\FgoClient;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -133,6 +134,14 @@ class InvoiceController extends Controller
             'payment_method' => $data['payment_method'] ?? null,
             'payment_reference' => $data['payment_reference'] ?? null,
         ]);
+
+        AuditLog::record(
+            request()->user(),
+            'invoice.payment_recorded',
+            "Plata de {$amount} lei inregistrata pentru factura {$invoice->invoice_number}.",
+            $invoice,
+            ['amount' => $amount, 'paid_total' => $totalPaid, 'payment_method' => $data['payment_method'] ?? null],
+        );
 
         return back()->with('success', 'Factura marcata ca platita.');
     }

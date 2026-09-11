@@ -45,5 +45,7 @@ class PurchaseOrderTest extends TestCase
         $this->assertDatabaseHas('purchase_orders', ['id' => $order->id, 'status' => 'received']);
         $this->assertDatabaseHas('equipment', ['id' => $equipment->id, 'stock_quantity' => 5, 'cost_price' => 110]);
         $this->assertDatabaseHas('expenses', ['document_number' => $order->order_number, 'amount' => 330]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'purchase_order.created', 'auditable_id' => $order->id]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'purchase_order.received', 'auditable_id' => $order->id]);
     }
 }

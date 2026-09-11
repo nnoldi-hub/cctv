@@ -95,6 +95,7 @@ class InvoiceCrudTest extends TestCase
         $this->assertSame('unpaid', $invoice->status);
         $this->assertSame(700.0, $invoice->remaining_amount);
         $this->assertDatabaseHas('invoice_payments', ['invoice_id' => $invoice->id, 'amount' => 300]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'invoice.payment_recorded', 'auditable_id' => $invoice->id]);
 
         $this->actingAs($this->adminUser)
             ->patch(route('admin.invoices.pay', $invoice), ['paid_amount' => 700, 'payment_method' => 'cash'])

@@ -7,6 +7,7 @@ use App\Models\Equipment;
 use App\Models\Expense;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
+use App\Models\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,13 @@ class PurchaseOrderController extends Controller
                 'total_amount' => collect($data['items'])->sum(fn ($item) => $item['quantity'] * $item['unit_cost']),
             ]);
             $order->items()->createMany($data['items']);
+            AuditLog::record(
+                request()->user(),
+                'purchase_order.created',
+                "Comanda {$order->order_number} a fost creata.",
+                $order,
+                ['total_amount' => (float) $order->total_amount, 'items_count' => count($data['items'])],
+            );
             return $order;
         });
 
@@ -91,6 +99,13 @@ class PurchaseOrderController extends Controller
             }
             $complete = $purchaseOrder->items()->whereColumn('received_quantity', '<', 'quantity')->doesntExist();
             $purchaseOrder->update(['status' => $complete ? 'received' : 'partially_received', 'received_at' => $complete ? today() : null]);
+            AuditLog::record(
+                request()->user(),
+                'purchase_order.received',
+                "Recepție inregistrata pentru comanda {$purchaseOrder->order_number}.",
+                $purchaseOrder,
+                ['status' => $purchaseOrder->status, 'amount' => $receivedTotal],
+            );
         });
 
         return back()->with('success', 'Recepția a fost înregistrată. Stocul și cheltuielile au fost actualizate.');
