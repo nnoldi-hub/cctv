@@ -217,7 +217,11 @@ function money(value) {
                     <div class="rounded-lg bg-white p-6 shadow-sm">
                         <div class="flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-slate-500">Facturi ({{ client.invoices.length }})</h3>
-                            <Link v-if="canAdmin" :href="route('admin.invoices.create', { client_id: client.id })" class="text-sm font-medium text-blue-600 hover:text-blue-500">Factura noua</Link>
+                            <div class="flex items-center gap-3">
+                                <a :href="route('sales.clients.statement.pdf', client.id)" target="_blank" class="text-sm font-medium text-slate-600 hover:text-slate-900">Situatie PDF</a>
+                                <a :href="route('sales.clients.statement.excel', client.id)" class="text-sm font-medium text-slate-600 hover:text-slate-900">Situatie Excel</a>
+                                <Link v-if="canAdmin" :href="route('admin.invoices.create', { client_id: client.id })" class="text-sm font-medium text-blue-600 hover:text-blue-500">Factura noua</Link>
+                            </div>
                         </div>
                         <div v-if="client.invoices.length" class="mt-4 divide-y divide-slate-100">
                             <div v-for="invoice in client.invoices" :key="invoice.id" class="flex items-center justify-between py-3">

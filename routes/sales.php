@@ -14,6 +14,8 @@ Route::middleware(['auth', 'verified'])->prefix('vanzari')->name('sales.')->grou
     Route::middleware('role_or_permission:admin|vanzari|clients.view|clients.manage')->group(function () {
         Route::get('/clienti/export', [ClientController::class, 'export'])->name('clients.export');
         Route::resource('clienti', ClientController::class)->parameters(['clienti' => 'client'])->names('clients');
+        Route::get('/clienti/{client}/situatie-financiara/pdf', [ClientController::class, 'statementPdf'])->name('clients.statement.pdf');
+        Route::get('/clienti/{client}/situatie-financiara/excel', [ClientController::class, 'statementExcel'])->name('clients.statement.excel');
         Route::patch('/clienti/{client}/pipeline', [ClientController::class, 'updatePipeline'])->name('clients.pipeline');
         Route::get('/activitati', [ActivityController::class, 'index'])->name('activities.index');
         Route::get('/activitati/creeaza', [ActivityController::class, 'create'])->name('activities.create');

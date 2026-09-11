@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Exports\ClientsExport;
+use App\Exports\ClientStatementExport;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Setting;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -108,19 +111,49 @@ class ClientController extends Controller
 
         return Inertia::render('Sales/Clients/Show', [
             'client' => $client,
-            'summary' => [
+            'summary' => array_merge($this->financialSummary($client), [
                 'offers' => $client->offers->count(),
                 'installations' => $client->installations->count(),
                 'invoices' => $client->invoices->count(),
-                'invoiceTotal' => (float) $client->invoices->sum('amount'),
-                'invoicePaid' => (float) $client->invoices->sum('paid_amount'),
-                'invoiceBalance' => (float) $client->invoices->whereIn('status', ['unpaid', 'overdue'])->sum(fn ($invoice) => max((float) $invoice->amount - (float) $invoice->paid_amount, 0)),
-                'overdueInvoices' => $client->invoices->where('status', 'overdue')->count(),
                 'openTickets' => $client->tickets->whereNotIn('status', ['resolved', 'closed'])->count(),
                 'activeSubscriptions' => $client->subscriptions->where('status', 'active')->count(),
                 'pendingActivities' => $client->activities->where('status', 'pending')->count(),
-            ],
+            ]),
         ]);
+    }
+
+    public function statementPdf(Client $client)
+    {
+        $invoices = $client->invoices()->with('payments')->latest()->get();
+        $payments = $invoices->flatMap->payments->sortByDesc('paid_at')->values();
+
+        return Pdf::loadView('pdfs.client-statement', [
+            'client' => $client,
+            'invoices' => $invoices,
+            'payments' => $payments,
+            'summary' => $this->financialSummary($client, $invoices),
+            'settings' => Setting::allSettings(),
+        ])->stream('situatie-financiara-'.str($client->name)->slug().'.pdf');
+    }
+
+    public function statementExcel(Client $client)
+    {
+        return Excel::download(
+            new ClientStatementExport($client),
+            'situatie-financiara-'.str($client->name)->slug().'.xlsx'
+        );
+    }
+
+    private function financialSummary(Client $client, $invoices = null): array
+    {
+        $invoices ??= $client->invoices;
+
+        return [
+            'invoiceTotal' => (float) $invoices->sum('amount'),
+            'invoicePaid' => (float) $invoices->sum('paid_amount'),
+            'invoiceBalance' => (float) $invoices->whereIn('status', ['unpaid', 'overdue'])->sum(fn ($invoice) => max((float) $invoice->amount - (float) $invoice->paid_amount, 0)),
+            'overdueInvoices' => $invoices->where('status', 'overdue')->count(),
+        ];
     }
 
     public function edit(Client $client): Response

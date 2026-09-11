@@ -138,4 +138,26 @@ class ClientCrudTest extends TestCase
                 ->where('client.invoices.0.payments.0.amount', '300.00')
             );
     }
+
+    public function test_client_financial_statement_pdf_downloads(): void
+    {
+        $client = Client::factory()->create();
+        $invoice = Invoice::factory()->create(['client_id' => $client->id, 'amount' => 1000, 'paid_amount' => 300, 'status' => 'unpaid']);
+        InvoicePayment::create(['invoice_id' => $invoice->id, 'amount' => 300, 'payment_method' => 'transfer', 'paid_at' => now()]);
+
+        $this->actingAs($this->salesUser)
+            ->get(route('sales.clients.statement.pdf', $client))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_client_financial_statement_excel_downloads(): void
+    {
+        $client = Client::factory()->create();
+        Invoice::factory()->create(['client_id' => $client->id, 'amount' => 1000, 'paid_amount' => 300, 'status' => 'unpaid']);
+
+        $this->actingAs($this->salesUser)
+            ->get(route('sales.clients.statement.excel', $client))
+            ->assertOk();
+    }
 }
