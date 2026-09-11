@@ -85,6 +85,24 @@ class InstallationCrudTest extends TestCase
         $this->assertTrue($installation->checklist[0]['done']);
     }
 
+    public function test_technician_can_view_daily_installation_calendar(): void
+    {
+        $installation = Installation::factory()->create([
+            'scheduled_at' => '2026-09-11 09:30:00',
+            'status' => 'scheduled',
+        ]);
+
+        $this->actingAs($this->techUser)
+            ->get(route('technical.installations.calendar', ['date' => '2026-09-11']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Technical/Installations/Calendar')
+                ->where('date', '2026-09-11')
+                ->has('installations', 1)
+                ->where('installations.0.id', $installation->id)
+            );
+    }
+
     public function test_toggling_one_checklist_item_does_not_affect_others(): void
     {
         $installation = Installation::factory()->create();

@@ -43,6 +43,24 @@ class InstallationController extends Controller
         ]);
     }
 
+    public function calendar(Request $request): Response
+    {
+        $date = $request->date('date')?->toDateString() ?? today()->toDateString();
+        $technicianId = $request->integer('technician_id') ?: null;
+
+        return Inertia::render('Technical/Installations/Calendar', [
+            'date' => $date,
+            'technicianId' => $technicianId,
+            'technicians' => User::role('tehnic')->orderBy('name')->get(['id', 'name']),
+            'installations' => Installation::with(['client:id,name', 'technician:id,name'])
+                ->whereDate('scheduled_at', $date)
+                ->when($technicianId, fn ($query, $id) => $query->where('technician_id', $id))
+                ->whereNotIn('status', ['cancelled'])
+                ->orderBy('scheduled_at')
+                ->get(['id', 'client_id', 'technician_id', 'type', 'address', 'scheduled_at', 'status']),
+        ]);
+    }
+
     public function create(Request $request): Response
     {
         return Inertia::render('Technical/Installations/Create', [

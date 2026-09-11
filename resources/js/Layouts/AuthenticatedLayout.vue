@@ -41,6 +41,7 @@ const sections = [
             { name: 'Servicii', route: 'technical.services.index', roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
             { name: 'Stoc scazut', route: 'technical.equipment.index', query: { low_stock: 1 }, roles: ['admin', 'tehnic'], permissions: ['equipment.view', 'equipment.manage'] },
             { name: 'Instalari', route: 'technical.installations.index', roles: ['admin', 'tehnic'], permissions: ['installations.view', 'installations.manage'] },
+            { name: 'Calendar programari', route: 'technical.installations.calendar', roles: ['admin', 'tehnic'], permissions: ['installations.view', 'installations.manage'] },
             { name: 'Tichete', route: 'technical.tickets.index', roles: ['admin', 'tehnic', 'suport'] },
         ],
     },

@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->prefix('tehnic')->name('technical.')->g
     });
 
     Route::middleware('role_or_permission:admin|tehnic|installations.view|installations.manage')->group(function () {
+        Route::get('/instalari/calendar', [InstallationController::class, 'calendar'])->name('installations.calendar');
         Route::resource('instalari', InstallationController::class)->parameters(['instalari' => 'installation'])->names('installations');
         Route::patch('/instalari/{installation}/status', [InstallationController::class, 'updateStatus'])->name('installations.status');
         Route::patch('/instalari/{installation}/checklist', [InstallationController::class, 'updateChecklist'])->name('installations.checklist');
