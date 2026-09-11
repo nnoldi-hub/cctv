@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import HorizontalBarList from '@/Components/Charts/HorizontalBarList.vue';
 import MonthlyBarChart from '@/Components/Charts/MonthlyBarChart.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
     sales: Object,
@@ -49,7 +49,12 @@ function money(value) {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">Rapoarte</h2>
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold leading-tight text-gray-800">Rapoarte</h2>
+                <Link :href="route('admin.reports.profit')" class="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700">
+                    Raport profit
+                </Link>
+            </div>
         </template>
 
         <div class="py-8">

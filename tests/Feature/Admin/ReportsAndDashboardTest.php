@@ -194,4 +194,51 @@ class ReportsAndDashboardTest extends TestCase
 
         $this->assertNotNull($this->adminUser->notifications()->find('00000000-0000-0000-0000-000000000001')->read_at);
     }
+
+    public function test_profit_report_aggregates_completed_installations_by_client_and_technician(): void
+    {
+        $client = Client::factory()->create(['name' => 'Client Profit']);
+        $technician = User::factory()->create(['name' => 'Tehnician Profit']);
+        $offer = Offer::factory()->create(['client_id' => $client->id, 'status' => 'accepted', 'total_amount' => 2000]);
+
+        Installation::factory()->create([
+            'client_id' => $client->id,
+            'offer_id' => $offer->id,
+            'technician_id' => $technician->id,
+            'status' => 'completed',
+            'completed_at' => now(),
+            'material_items' => [],
+            'service_items' => [],
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.reports.profit'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Admin/Reports/Profit')
+            ->where('summary.installations', 1)
+            ->where('summary.revenue', 2000)
+            ->where('summary.profit', 2000)
+            ->where('byClient.0.client', 'Client Profit')
+            ->where('byTechnician.0.technician', 'Tehnician Profit')
+        );
+    }
+
+    public function test_profit_report_excludes_installations_outside_selected_period(): void
+    {
+        Installation::factory()->create([
+            'status' => 'completed',
+            'completed_at' => now()->subYear(),
+            'material_items' => [],
+            'service_items' => [],
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.reports.profit', [
+            'from' => now()->subMonth()->format('Y-m-d'),
+            'to' => now()->format('Y-m-d'),
+        ]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('summary.installations', 0)
+        );
+    }
 }

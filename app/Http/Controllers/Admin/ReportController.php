@@ -9,6 +9,8 @@ use App\Models\Invoice;
 use App\Models\Expense;
 use App\Models\Offer;
 use App\Models\Ticket;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -77,5 +79,71 @@ class ReportController extends Controller
         }
 
         return round((Client::where('status', 'client')->count() / $total) * 100, 1);
+    }
+
+    public function profit(Request $request): Response
+    {
+        $from = $request->date('from') ?? now()->subMonths(5)->startOfMonth();
+        $to = $request->date('to') ?? now()->endOfMonth();
+
+        $installations = Installation::query()
+            ->with(['client:id,name', 'technician:id,name', 'offer:id,total_amount'])
+            ->where('status', 'completed')
+            ->whereBetween('completed_at', [$from, $to])
+            ->get()
+            ->map(function (Installation $installation) {
+                $report = $installation->cost_report;
+
+                return [
+                    'id' => $installation->id,
+                    'client_id' => $installation->client_id,
+                    'client_name' => $installation->client?->name ?? 'Necunoscut',
+                    'technician_id' => $installation->technician_id,
+                    'technician_name' => $installation->technician?->name ?? 'Nealocat',
+                    'completed_at' => $installation->completed_at?->format('d.m.Y'),
+                    'type' => $installation->type,
+                    'offer_value' => $report['offer_value'],
+                    'material_cost' => $report['material_cost'],
+                    'labor_cost' => $report['labor_cost'],
+                    'actual_expenses' => $report['actual_expenses'],
+                    'profit' => $report['final_profit'] ?? 0,
+                ];
+            });
+
+        $byClient = $installations->groupBy('client_name')->map(function ($rows, $clientName) {
+            return [
+                'client' => $clientName,
+                'installations' => $rows->count(),
+                'revenue' => round($rows->sum('offer_value'), 2),
+                'cost' => round($rows->sum('material_cost') + $rows->sum('labor_cost') + $rows->sum('actual_expenses'), 2),
+                'profit' => round($rows->sum('profit'), 2),
+            ];
+        })->sortByDesc('profit')->values();
+
+        $byTechnician = $installations->groupBy('technician_name')->map(function ($rows, $technicianName) {
+            return [
+                'technician' => $technicianName,
+                'installations' => $rows->count(),
+                'revenue' => round($rows->sum('offer_value'), 2),
+                'cost' => round($rows->sum('material_cost') + $rows->sum('labor_cost') + $rows->sum('actual_expenses'), 2),
+                'profit' => round($rows->sum('profit'), 2),
+            ];
+        })->sortByDesc('profit')->values();
+
+        return Inertia::render('Admin/Reports/Profit', [
+            'filters' => [
+                'from' => $from->format('Y-m-d'),
+                'to' => $to->format('Y-m-d'),
+            ],
+            'summary' => [
+                'installations' => $installations->count(),
+                'revenue' => round($installations->sum('offer_value'), 2),
+                'cost' => round($installations->sum('material_cost') + $installations->sum('labor_cost') + $installations->sum('actual_expenses'), 2),
+                'profit' => round($installations->sum('profit'), 2),
+            ],
+            'byClient' => $byClient,
+            'byTechnician' => $byTechnician,
+            'installations' => $installations->sortByDesc('completed_at')->values(),
+        ]);
     }
 }

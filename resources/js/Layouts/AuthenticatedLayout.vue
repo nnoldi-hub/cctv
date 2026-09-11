@@ -56,6 +56,7 @@ const sections = [
             { name: 'Cheltuieli si achizitii', route: 'admin.expenses.index', icon: 'shopping-cart' },
             { name: 'Abonamente', route: 'admin.subscriptions.index', icon: 'credit-card' },
             { name: 'KPI / Rapoarte', route: 'admin.reports', icon: 'bar-chart' },
+            { name: 'Raport profit', route: 'admin.reports.profit', icon: 'trending-up' },
             { name: 'Log SMS', route: 'admin.sms-logs', icon: 'message-square' },
             { name: 'Jurnal audit', route: 'admin.audit-logs', icon: 'file-text' },
             { name: 'Setari', route: 'admin.settings.edit', icon: 'settings' },
