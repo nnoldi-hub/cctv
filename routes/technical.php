@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->prefix('tehnic')->name('technical.')->g
         Route::post('/furnizori/import', [SupplierController::class, 'import'])->name('suppliers.import');
         Route::resource('comenzi-furnizori', PurchaseOrderController::class)->only(['index', 'create', 'store'])->parameters(['comenzi-furnizori' => 'purchaseOrder'])->names('purchase-orders');
         Route::patch('/comenzi-furnizori/{purchaseOrder}/receptioneaza', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+        Route::post('/comenzi-furnizori/reaprovizionare', [PurchaseOrderController::class, 'replenish'])->name('purchase-orders.replenish');
     });
 
     Route::middleware('role_or_permission:admin|tehnic|installations.view|installations.manage')->group(function () {

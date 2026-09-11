@@ -31,6 +31,41 @@ class PurchaseOrderController extends Controller
         ]);
     }
 
+    public function replenish(): RedirectResponse
+    {
+        $equipment = Equipment::query()
+            ->with('supplier')
+            ->where('is_active', true)
+            ->whereColumn('stock_quantity', '<=', 'minimum_stock')
+            ->whereNotNull('supplier_id')
+            ->get();
+
+        $created = 0;
+        DB::transaction(function () use ($equipment, &$created) {
+            foreach ($equipment->groupBy('supplier_id') as $supplierId => $items) {
+                $lines = $items->map(fn (Equipment $item) => [
+                    'equipment_id' => $item->id,
+                    'quantity' => max(((int) $item->minimum_stock * 2) - (int) $item->stock_quantity, 1),
+                    'unit_cost' => $item->cost_price ?? 0,
+                ])->values()->all();
+                $order = PurchaseOrder::create([
+                    'supplier_id' => $supplierId,
+                    'order_number' => 'PO-'.now()->format('YmdHis').'-'.random_int(10, 99),
+                    'status' => 'draft',
+                    'notes' => 'Generata automat din recomandarea de reaprovizionare.',
+                    'total_amount' => collect($lines)->sum(fn (array $line) => $line['quantity'] * $line['unit_cost']),
+                ]);
+                $order->items()->createMany($lines);
+                $created++;
+                AuditLog::record(request()->user(), 'purchase_order.replenishment_created', "Comanda recomandata {$order->order_number} a fost generata.", $order, ['items_count' => count($lines)]);
+            }
+        });
+
+        return back()->with('success', $created
+            ? "Au fost generate {$created} comenzi recomandate."
+            : 'Nu exista materiale sub prag cu furnizor asociat.');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([

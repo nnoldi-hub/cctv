@@ -34,6 +34,12 @@ function destroy(item) {
     if (confirm(`Stergi echipamentul "${item.name}"?`)) {
         router.delete(route('technical.equipment.destroy', item.id));
     }
+
+    function generateReplenishmentOrders() {
+        if (confirm('Generezi comenzi recomandate pentru toate materialele sub pragul minim?')) {
+            router.post(route('technical.purchase-orders.replenish'), {}, { preserveScroll: true });
+        }
+    }
 }
 </script>
 
@@ -50,6 +56,9 @@ function destroy(item) {
                 <Link :href="route('technical.suppliers.index')" class="ml-2 rounded-md bg-slate-700 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-600">
                     Furnizori / Import
                 </Link>
+                <button type="button" class="ml-2 rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-500" @click="generateReplenishmentOrders">
+                    Genereaza comenzi recomandate
+                </button>
             </div>
         </template>
 

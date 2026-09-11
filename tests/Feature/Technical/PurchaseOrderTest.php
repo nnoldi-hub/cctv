@@ -48,4 +48,27 @@ class PurchaseOrderTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'purchase_order.created', 'auditable_id' => $order->id]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'purchase_order.received', 'auditable_id' => $order->id]);
     }
+
+    public function test_technician_can_generate_replenishment_orders_from_low_stock(): void
+    {
+        $supplier = Supplier::create(['name' => 'Furnizor reaprovizionare']);
+        Equipment::factory()->create([
+            'supplier_id' => $supplier->id,
+            'stock_quantity' => 2,
+            'minimum_stock' => 5,
+            'cost_price' => 80,
+            'is_active' => true,
+        ]);
+        Equipment::factory()->create(['stock_quantity' => 1, 'minimum_stock' => 5, 'supplier_id' => null]);
+
+        $this->actingAs($this->technician)
+            ->post(route('technical.purchase-orders.replenish'))
+            ->assertRedirect();
+
+        $order = PurchaseOrder::with('items')->first();
+        $this->assertSame('draft', $order->status);
+        $this->assertCount(1, $order->items);
+        $this->assertSame(8.0, (float) $order->items->first()->quantity);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'purchase_order.replenishment_created']);
+    }
 }
