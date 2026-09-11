@@ -9,6 +9,7 @@ const page = usePage();
 
 const statusClasses = {
     unpaid: 'bg-amber-100 text-amber-800',
+    partial: 'bg-blue-100 text-blue-800',
     paid: 'bg-green-100 text-green-800',
     overdue: 'bg-red-100 text-red-700',
     cancelled: 'bg-slate-100 text-slate-500',
@@ -16,6 +17,10 @@ const statusClasses = {
 
 function money(value) {
     return Number(value).toLocaleString('ro-RO', { minimumFractionDigits: 2 });
+}
+
+function isPartial() {
+    return props.invoice.status === 'unpaid' && Number(props.invoice.paid_amount) > 0;
 }
 
 function markPaid() {
@@ -72,8 +77,8 @@ function destroy() {
                                 {{ invoice.client.name }}
                             </Link>
                         </div>
-                        <span class="rounded-full px-3 py-1 text-sm font-medium" :class="statusClasses[invoice.status]">
-                            {{ invoice.status }}
+                        <span class="rounded-full px-3 py-1 text-sm font-medium" :class="isPartial() ? statusClasses.partial : statusClasses[invoice.status]">
+                            {{ isPartial() ? 'Plata partiala' : invoice.status }}
                         </span>
                     </div>
 
@@ -81,6 +86,7 @@ function destroy() {
                         <div>
                             <dt class="text-slate-400">Suma</dt>
                             <dd class="text-lg font-semibold text-slate-900">{{ money(invoice.amount) }} lei</dd>
+                            <dd class="text-sm text-slate-500">Achitat: {{ money(invoice.paid_amount) }} lei · Sold: {{ money(Number(invoice.amount) - Number(invoice.paid_amount)) }} lei</dd>
                         </div>
                         <div>
                             <dt class="text-slate-400">Oferta asociata</dt>
@@ -103,6 +109,16 @@ function destroy() {
                             <dd class="text-slate-900">{{ invoice.payment_method || '-' }}</dd>
                         </div>
                     </dl>
+
+                    <div v-if="invoice.payments?.length" class="mt-6">
+                        <h3 class="mb-2 text-sm font-semibold text-slate-700">Istoric plati</h3>
+                        <div class="divide-y rounded-md border border-slate-200 text-sm">
+                            <div v-for="payment in invoice.payments" :key="payment.id" class="flex items-center justify-between px-3 py-2">
+                                <span>{{ new Date(payment.paid_at).toLocaleDateString('ro-RO') }} · {{ payment.payment_method || 'Nespecificata' }}{{ payment.payment_reference ? ` · ${payment.payment_reference}` : '' }}</span>
+                                <strong>{{ money(payment.amount) }} lei</strong>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="mt-6 rounded-md border border-slate-200 bg-slate-50 p-4">
                         <div class="flex items-center justify-between gap-3">
@@ -129,7 +145,7 @@ function destroy() {
                     <div v-if="['unpaid', 'overdue'].includes(invoice.status)" class="mt-6 space-y-3 rounded-md border border-green-200 bg-green-50 p-4">
                         <div class="text-sm font-semibold text-green-800">Inregistreaza plata</div>
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            <input v-model.number="paymentForm.paid_amount" type="number" min="0" step="0.01" placeholder="Suma platita" class="rounded-md border-slate-300 text-sm" />
+                            <input v-model.number="paymentForm.paid_amount" type="number" min="0.01" :max="Number(invoice.amount) - Number(invoice.paid_amount)" step="0.01" placeholder="Suma platita" class="rounded-md border-slate-300 text-sm" />
                             <select v-model="paymentForm.payment_method" class="rounded-md border-slate-300 text-sm">
                                 <option value="">Metoda plata</option>
                                 <option value="transfer">Transfer bancar</option>

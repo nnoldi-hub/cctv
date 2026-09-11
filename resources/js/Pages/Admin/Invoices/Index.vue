@@ -24,6 +24,7 @@ watch(form, () => {
 
 const statusClasses = {
     unpaid: 'bg-amber-100 text-amber-800',
+    partial: 'bg-blue-100 text-blue-800',
     paid: 'bg-green-100 text-green-800',
     overdue: 'bg-red-100 text-red-700',
     cancelled: 'bg-slate-100 text-slate-500',
@@ -31,6 +32,10 @@ const statusClasses = {
 
 function money(value) {
     return Number(value).toLocaleString('ro-RO', { minimumFractionDigits: 2 });
+}
+
+function isPartial(invoice) {
+    return invoice.status === 'unpaid' && Number(invoice.paid_amount) > 0;
 }
 
 function exportUrl() {
@@ -83,6 +88,7 @@ function markPaid(invoice) {
                     <select v-model="form.status" class="rounded-md border-slate-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Toate statusurile</option>
                         <option value="unpaid">Neplatita</option>
+                        <option value="partial">Plata partiala</option>
                         <option value="paid">Platita</option>
                         <option value="overdue">Restanta</option>
                         <option value="cancelled">Anulata</option>
@@ -110,14 +116,17 @@ function markPaid(invoice) {
                                     </Link>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-slate-600">{{ invoice.client.name }}</td>
-                                <td class="px-4 py-3 text-right font-medium text-slate-900">{{ money(invoice.amount) }} lei</td>
+                                <td class="px-4 py-3 text-right font-medium text-slate-900">
+                                    {{ money(invoice.amount) }} lei
+                                    <div v-if="Number(invoice.paid_amount) > 0" class="text-xs text-slate-500">Achitat: {{ money(invoice.paid_amount) }} lei</div>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-slate-600">{{ invoice.due_at ? new Date(invoice.due_at).toLocaleDateString('ro-RO') : '-' }}</td>
                                 <td class="px-4 py-3">
-                                    <span class="rounded-full px-2 py-1 text-xs font-medium" :class="statusClasses[invoice.status]">{{ invoice.status }}</span>
+                                    <span class="rounded-full px-2 py-1 text-xs font-medium" :class="isPartial(invoice) ? statusClasses.partial : statusClasses[invoice.status]">{{ isPartial(invoice) ? 'Plata partiala' : invoice.status }}</span>
                                 </td>
                                 <td class="px-4 py-3 text-right text-sm">
-                                    <button v-if="invoice.status === 'unpaid'" class="text-green-600 hover:text-green-700" @click="markPaid(invoice)">
-                                        Marcheaza platita
+                                    <button v-if="['unpaid', 'overdue'].includes(invoice.status)" class="text-green-600 hover:text-green-700" @click="markPaid(invoice)">
+                                        Inregistreaza plata
                                     </button>
                                 </td>
                             </tr>

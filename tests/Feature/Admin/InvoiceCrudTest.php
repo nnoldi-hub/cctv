@@ -83,6 +83,27 @@ class InvoiceCrudTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_record_partial_payments_and_remaining_balance(): void
+    {
+        $invoice = Invoice::factory()->create(['amount' => 1000, 'status' => 'unpaid']);
+
+        $this->actingAs($this->adminUser)
+            ->patch(route('admin.invoices.pay', $invoice), ['paid_amount' => 300, 'payment_method' => 'transfer'])
+            ->assertRedirect();
+
+        $invoice->refresh();
+        $this->assertSame('unpaid', $invoice->status);
+        $this->assertSame(700.0, $invoice->remaining_amount);
+        $this->assertDatabaseHas('invoice_payments', ['invoice_id' => $invoice->id, 'amount' => 300]);
+
+        $this->actingAs($this->adminUser)
+            ->patch(route('admin.invoices.pay', $invoice), ['paid_amount' => 700, 'payment_method' => 'cash'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('invoices', ['id' => $invoice->id, 'status' => 'paid', 'paid_amount' => 1000]);
+        $this->assertDatabaseCount('invoice_payments', 2);
+    }
+
     public function test_overdue_unpaid_invoices_are_marked_overdue_when_listed(): void
     {
         $invoice = Invoice::factory()->create(['status' => 'unpaid', 'due_at' => now()->subDay()]);

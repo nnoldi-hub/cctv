@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Offer;
+use App\Models\InvoicePayment;
 use App\Models\Setting;
 use App\Services\FgoClient;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -48,7 +49,7 @@ class InvoiceController extends Controller
             'invoices' => $invoices,
             'filters' => $request->only('search', 'status'),
             'summary' => [
-                'unpaid' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
+                    'unpaid' => (float) Invoice::whereIn('status', ['unpaid', 'partial'])->sum('amount'),
                 'paid' => (float) Invoice::where('status', 'paid')->sum('amount'),
                 'overdue' => Invoice::where('status', 'overdue')->count(),
             ],
@@ -82,7 +83,7 @@ class InvoiceController extends Controller
     {
         $this->markOverdueInvoices();
         $invoice->refresh();
-        $invoice->load(['client', 'offer']);
+        $invoice->load(['client', 'offer', 'payments' => fn ($query) => $query->latest('paid_at')]);
 
         return Inertia::render('Admin/Invoices/Show', [
             'invoice' => $invoice,
@@ -108,15 +109,27 @@ class InvoiceController extends Controller
     public function markPaid(Invoice $invoice): RedirectResponse
     {
         $data = request()->validate([
-            'paid_amount' => ['nullable', 'numeric', 'min:0', 'max:'.$invoice->amount],
+            'paid_amount' => ['nullable', 'numeric', 'min:0', 'max:'.$invoice->remaining_amount],
             'payment_method' => ['nullable', 'string', 'max:50'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
         ]);
 
+        $amount = (float) ($data['paid_amount'] ?? $invoice->remaining_amount);
+        abort_if($amount <= 0, 422, 'Factura este deja achitata.');
+        $paidAt = now();
+
+        $invoice->payments()->create([
+            'amount' => $amount,
+            'payment_method' => $data['payment_method'] ?? null,
+            'payment_reference' => $data['payment_reference'] ?? null,
+            'paid_at' => $paidAt,
+        ]);
+
+        $totalPaid = (float) $invoice->paid_amount + $amount;
         $invoice->update([
-            'status' => 'paid',
-            'paid_amount' => $data['paid_amount'] ?? $invoice->amount,
-            'paid_at' => now(),
+            'status' => $totalPaid >= (float) $invoice->amount ? 'paid' : 'unpaid',
+            'paid_amount' => $totalPaid,
+            'paid_at' => $paidAt,
             'payment_method' => $data['payment_method'] ?? null,
             'payment_reference' => $data['payment_reference'] ?? null,
         ]);
@@ -177,7 +190,7 @@ class InvoiceController extends Controller
     private function markOverdueInvoices(): void
     {
         Invoice::query()
-            ->where('status', 'unpaid')
+            ->whereIn('status', ['unpaid', 'partial'])
             ->whereNotNull('due_at')
             ->whereDate('due_at', '<', today())
             ->update(['status' => 'overdue']);
