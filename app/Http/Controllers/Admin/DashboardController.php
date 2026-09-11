@@ -35,8 +35,12 @@ class DashboardController extends Controller
                 'users' => User::count(),
                 'invoicesUnpaid' => Invoice::where('status', 'unpaid')->count(),
                 'invoicesOverdue' => Invoice::where('status', 'overdue')->count(),
-                'unpaidAmount' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
-                'overdueAmount' => (float) Invoice::where('status', 'overdue')->sum('amount'),
+                'unpaidAmount' => (float) Invoice::whereIn('status', ['unpaid', 'overdue'])
+                    ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+                    ->value('total'),
+                'overdueAmount' => (float) Invoice::where('status', 'overdue')
+                    ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+                    ->value('total'),
                 'revenuePaid' => (float) Invoice::where('status', 'paid')->sum('amount'),
                 'revenueThisMonth' => (float) Invoice::where('status', 'paid')
                     ->whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])
@@ -86,7 +90,7 @@ class DashboardController extends Controller
     {
         $alerts = [];
 
-        $lowStockCount = Equipment::where('stock_quantity', '<', 5)->count();
+        $lowStockCount = Equipment::whereColumn('stock_quantity', '<=', 'minimum_stock')->count();
         if ($lowStockCount > 0) {
             $alerts[] = [
                 'type' => 'warning',

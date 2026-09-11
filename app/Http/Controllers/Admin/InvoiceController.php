@@ -50,7 +50,9 @@ class InvoiceController extends Controller
             'invoices' => $invoices,
             'filters' => $request->only('search', 'status'),
             'summary' => [
-                    'unpaid' => (float) Invoice::whereIn('status', ['unpaid', 'partial'])->sum('amount'),
+                'unpaid' => (float) Invoice::whereIn('status', ['unpaid', 'overdue'])
+                    ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+                    ->value('total'),
                 'paid' => (float) Invoice::where('status', 'paid')->sum('amount'),
                 'overdue' => Invoice::where('status', 'overdue')->count(),
             ],

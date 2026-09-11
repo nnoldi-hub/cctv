@@ -50,9 +50,11 @@ class ReportController extends Controller
             ],
             'financial' => [
                 'revenueByMonth' => $revenueByMonth,
-                'unpaidTotal' => (float) Invoice::where('status', 'unpaid')->sum('amount'),
+                'unpaidTotal' => (float) Invoice::whereIn('status', ['unpaid', 'overdue'])
+                    ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
+                    ->value('total'),
                 'paidTotal' => (float) Invoice::where('status', 'paid')->sum('amount'),
-                'overdueCount' => Invoice::where('status', 'unpaid')->where('due_at', '<', now())->count(),
+                'overdueCount' => Invoice::where('status', 'overdue')->count(),
                 'expensesTotal' => (float) Expense::sum('amount'),
                 'expensesByCategory' => Expense::select('category', DB::raw('sum(amount) as total'))->groupBy('category')->pluck('total', 'category'),
                 'expensesBySupplier' => Expense::query()

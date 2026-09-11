@@ -136,6 +136,26 @@ class ReportsAndDashboardTest extends TestCase
             );
     }
 
+    public function test_dashboard_and_reports_use_remaining_invoice_balance(): void
+    {
+        Invoice::factory()->create(['status' => 'unpaid', 'amount' => 1000, 'paid_amount' => 300]);
+        Invoice::factory()->create(['status' => 'overdue', 'amount' => 800, 'paid_amount' => 200]);
+
+        $this->actingAs($this->adminUser)
+            ->get(route('admin.dashboard'))
+            ->assertInertia(fn ($page) => $page
+                ->where('stats.unpaidAmount', 1300)
+                ->where('stats.overdueAmount', 600)
+            );
+
+        $this->actingAs($this->adminUser)
+            ->get(route('admin.reports'))
+            ->assertInertia(fn ($page) => $page
+                ->where('financial.unpaidTotal', 1300)
+                ->where('financial.overdueCount', 1)
+            );
+    }
+
     public function test_admin_can_accept_a_pending_offer_directly_from_the_dashboard(): void
     {
         $client = Client::factory()->create();
