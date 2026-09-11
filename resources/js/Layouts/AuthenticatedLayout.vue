@@ -29,6 +29,17 @@ const sections = [
         ],
     },
     {
+        key: 'shop',
+        name: 'Magazin',
+        icon: 'shopping-cart',
+        roles: ['admin'],
+        items: [
+            { name: 'Comenzi magazin', route: 'admin.shop-orders.index' },
+            { name: 'Reduceri magazin', route: 'admin.discounts.index' },
+            { name: 'Produse in magazin', route: 'technical.equipment.index', query: { shop_visible: 1 } },
+        ],
+    },
+    {
         key: 'technical',
         name: 'Tehnic',
         icon: 'wrench',
@@ -46,26 +57,40 @@ const sections = [
         ],
     },
     {
-        key: 'admin',
-        name: 'Administrativ',
-        icon: 'settings',
+        key: 'financial',
+        name: 'Financiar',
+        icon: 'credit-card',
         roles: ['admin'],
         items: [
-            { name: 'Utilizatori', route: 'admin.users.index', icon: 'users' },
-            { name: 'Facturi', route: 'admin.invoices.index', icon: 'file-text' },
-            { name: 'Cheltuieli si achizitii', route: 'admin.expenses.index', icon: 'shopping-cart' },
-            { name: 'Abonamente', route: 'admin.subscriptions.index', icon: 'credit-card' },
-            { name: 'Comenzi magazin', route: 'admin.shop-orders.index', icon: 'shopping-cart' },
-            { name: 'Reduceri magazin', route: 'admin.discounts.index', icon: 'shopping-cart' },
-            { name: 'KPI / Rapoarte', route: 'admin.reports', icon: 'bar-chart' },
-            { name: 'Raport profit', route: 'admin.reports.profit', icon: 'trending-up' },
-            { name: 'Log SMS', route: 'admin.sms-logs', icon: 'message-square' },
-            { name: 'Jurnal audit', route: 'admin.audit-logs', icon: 'file-text' },
-            { name: 'Setari', route: 'admin.settings.edit', icon: 'settings' },
-            { name: 'Pachete site', route: 'admin.site-packages.index', icon: 'package' },
-            { name: 'Pagini publice', route: 'admin.pages.index', icon: 'file-text' },
-            { name: 'Statistici', route: 'admin.stats.index', icon: 'bar-chart' },
-            { name: 'Blog', route: 'admin.blog.index', icon: 'file-text' },
+            { name: 'Facturi', route: 'admin.invoices.index' },
+            { name: 'Cheltuieli si achizitii', route: 'admin.expenses.index' },
+            { name: 'Abonamente', route: 'admin.subscriptions.index' },
+            { name: 'KPI / Rapoarte', route: 'admin.reports' },
+            { name: 'Raport profit', route: 'admin.reports.profit' },
+        ],
+    },
+    {
+        key: 'content',
+        name: 'Site & Continut',
+        icon: 'globe',
+        roles: ['admin'],
+        items: [
+            { name: 'Pachete site', route: 'admin.site-packages.index' },
+            { name: 'Pagini publice', route: 'admin.pages.index' },
+            { name: 'Blog', route: 'admin.blog.index' },
+            { name: 'Statistici', route: 'admin.stats.index' },
+        ],
+    },
+    {
+        key: 'system',
+        name: 'Sistem',
+        icon: 'shield-check',
+        roles: ['admin'],
+        items: [
+            { name: 'Utilizatori', route: 'admin.users.index' },
+            { name: 'Log SMS', route: 'admin.sms-logs' },
+            { name: 'Jurnal audit', route: 'admin.audit-logs' },
+            { name: 'Setari', route: 'admin.settings.edit' },
         ],
     },
 ];
@@ -87,17 +112,18 @@ function itemHref(item) {
 function isItemActive(item, section) {
     if (!route().current(item.route)) return false;
 
-    const siblings = section.items.filter((i) => i.route === item.route);
-    if (siblings.length < 2) return true;
-
     const params = new URLSearchParams(window.location.search);
+
     if (item.query) {
         return Object.entries(item.query).every(([key, value]) => params.get(key) === String(value));
     }
 
-    const siblingKeys = new Set();
-    siblings.filter((i) => i.query).forEach((i) => Object.keys(i.query).forEach((k) => siblingKeys.add(k)));
-    return [...siblingKeys].every((key) => !params.has(key));
+    const siblingsWithQuery = section.items.filter((i) => i.route === item.route && i.query);
+    if (!siblingsWithQuery.length) return true;
+
+    return !siblingsWithQuery.some((sibling) =>
+        Object.entries(sibling.query).every(([key, value]) => params.get(key) === String(value))
+    );
 }
 
 function sectionHasActiveItem(section) {

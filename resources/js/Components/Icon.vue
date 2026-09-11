@@ -41,6 +41,11 @@ const paths = {
     'panel-left': '<rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/>',
     user: '<circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-4.1 3.4-7.5 7.5-7.5s7.5 3.4 7.5 7.5"/>',
     close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    'shopping-cart': '<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.8h7.2a2 2 0 0 0 2-1.6L21 8H6"/>',
+    percent: '<circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/><line x1="6" y1="18" x2="18" y2="6"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.8 2.6 4.3 6 4.3 9s-1.5 6.4-4.3 9c-2.8-2.6-4.3-6-4.3-9s1.5-6.4 4.3-9z"/>',
+    'shield-check': '<path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    'trending-up': '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
 };
 </script>
 

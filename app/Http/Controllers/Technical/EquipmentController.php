@@ -24,6 +24,7 @@ class EquipmentController extends Controller
             })
             ->when($request->string('category')->toString(), fn ($query, $category) => $query->where('category', $category))
             ->when($request->boolean('low_stock'), fn ($query) => $query->whereColumn('stock_quantity', '<=', 'minimum_stock'))
+            ->when($request->has('shop_visible'), fn ($query) => $query->where('is_visible_in_shop', $request->boolean('shop_visible')))
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -31,7 +32,7 @@ class EquipmentController extends Controller
         return Inertia::render('Technical/Equipment/Index', [
             'equipment' => $equipment,
             'suppliers' => Supplier::orderBy('name')->get(['id', 'name']),
-            'filters' => $request->only('search', 'category', 'low_stock'),
+            'filters' => $request->only('search', 'category', 'low_stock', 'shop_visible'),
         ]);
     }
 
