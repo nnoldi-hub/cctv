@@ -24,6 +24,7 @@ class EquipmentFactory extends Factory
             'unit' => 'buc',
             'unit_price' => fake()->randomFloat(2, 20, 1500),
             'stock_quantity' => fake()->numberBetween(0, 100),
+            'minimum_stock' => 5,
         ];
     }
 }

@@ -19,6 +19,7 @@ class Equipment extends Model
         'unit_price',
         'cost_price',
         'stock_quantity',
+        'minimum_stock',
         'description',
         'is_active',
         'client_id',
@@ -34,6 +35,7 @@ class Equipment extends Model
         'cost_price' => 'decimal:2',
         'markup_percent' => 'decimal:2',
         'is_active' => 'boolean',
+        'minimum_stock' => 'integer',
         'warranty_until' => 'date',
         'installed_at' => 'date',
     ];

@@ -68,7 +68,7 @@ function destroy(item) {
                     </select>
                     <label class="flex items-center gap-2 text-sm text-slate-600">
                         <input v-model="form.low_stock" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                        Doar stoc scazut (&lt;5)
+                        Doar stoc sub pragul minim
                     </label>
                 </div>
 
@@ -81,6 +81,7 @@ function destroy(item) {
                                 <th class="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Categorie</th>
                                 <th class="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">Pret vanzare / cost</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium uppercase text-slate-500">Stoc</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium uppercase text-slate-500">Reaprovizionare</th>
                                 <th class="px-4 py-3"></th>
                             </tr>
                         </thead>
@@ -99,11 +100,17 @@ function destroy(item) {
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-center gap-2">
                                         <button class="rounded border border-slate-300 px-2 text-slate-500 hover:bg-slate-100" @click="adjustStock(item, -1)">-</button>
-                                        <span class="w-10 text-center text-sm font-medium" :class="item.stock_quantity < 5 ? 'text-red-600' : 'text-slate-900'">
+                                        <span class="w-10 text-center text-sm font-medium" :class="item.stock_quantity <= item.minimum_stock ? 'text-red-600' : 'text-slate-900'">
                                             {{ item.stock_quantity }}
                                         </span>
                                         <button class="rounded border border-slate-300 px-2 text-slate-500 hover:bg-slate-100" @click="adjustStock(item, 1)">+</button>
                                     </div>
+                                </td>
+                                <td class="px-4 py-3 text-center text-sm">
+                                    <span v-if="item.stock_quantity <= item.minimum_stock" class="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
+                                        Comanda {{ Math.max(item.minimum_stock * 2 - item.stock_quantity, 0) }} {{ item.unit }}
+                                    </span>
+                                    <span v-else class="text-slate-400">-</span>
                                 </td>
                                 <td class="px-4 py-3 text-right text-sm">
                                     <span class="mr-3 rounded-full px-2 py-1 text-xs" :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'">{{ item.is_active ? 'Activ' : 'Inactiv' }}</span>
@@ -112,7 +119,7 @@ function destroy(item) {
                                 </td>
                             </tr>
                             <tr v-if="!equipment.data.length">
-                                <td colspan="5" class="px-4 py-8 text-center text-sm text-slate-400">Niciun echipament gasit.</td>
+                                <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">Niciun echipament gasit.</td>
                             </tr>
                         </tbody>
                     </table>

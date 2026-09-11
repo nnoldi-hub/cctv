@@ -22,7 +22,7 @@ class EquipmentController extends Controller
                 });
             })
             ->when($request->string('category')->toString(), fn ($query, $category) => $query->where('category', $category))
-            ->when($request->boolean('low_stock'), fn ($query) => $query->where('stock_quantity', '<', 5))
+            ->when($request->boolean('low_stock'), fn ($query) => $query->whereColumn('stock_quantity', '<=', 'minimum_stock'))
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -88,6 +88,7 @@ class EquipmentController extends Controller
         $request->merge([
             'cost_price' => $request->input('cost_price', 0),
             'markup_percent' => $request->input('markup_percent', 0),
+            'minimum_stock' => $request->input('minimum_stock', 5),
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -101,6 +102,7 @@ class EquipmentController extends Controller
             'markup_percent' => ['required', 'numeric', 'min:0', 'max:1000'],
             'supplier_id' => ['nullable', 'exists:suppliers,id'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
+            'minimum_stock' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string', 'max:1000'],
             'is_active' => ['required', 'boolean'],
         ]);

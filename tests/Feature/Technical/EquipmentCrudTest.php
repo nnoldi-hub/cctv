@@ -90,6 +90,20 @@ class EquipmentCrudTest extends TestCase
         );
     }
 
+    public function test_low_stock_filter_uses_each_equipment_minimum_stock(): void
+    {
+        Equipment::factory()->create(['stock_quantity' => 4, 'minimum_stock' => 4]);
+        Equipment::factory()->create(['stock_quantity' => 4, 'minimum_stock' => 3]);
+
+        $response = $this->actingAs($this->techUser)
+            ->get(route('technical.equipment.index', ['low_stock' => true]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->component('Technical/Equipment/Index')
+            ->has('equipment.data', 1)
+        );
+    }
+
     public function test_technician_can_import_supplier_catalog_with_markup(): void
     {
         $supplier = Supplier::create(['name' => 'Furnizor test']);

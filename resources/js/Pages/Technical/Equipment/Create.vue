@@ -12,6 +12,7 @@ const form = useForm({
     markup_percent: 0,
     supplier_id: '',
     stock_quantity: 0,
+    minimum_stock: 5,
     description: '',
     is_active: true,
 });
@@ -80,6 +81,11 @@ function submit() {
                         <div>
                             <label class="block text-sm font-medium text-slate-700">Stoc initial</label>
                             <input v-model.number="form.stock_quantity" type="number" min="0" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Prag minim stoc</label>
+                            <input v-model.number="form.minimum_stock" type="number" min="0" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+                            <p class="mt-1 text-xs text-slate-500">Vei primi recomandare de reaprovizionare când stocul ajunge la acest nivel.</p>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-slate-700">Descriere</label>
