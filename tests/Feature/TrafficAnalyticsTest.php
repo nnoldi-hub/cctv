@@ -79,7 +79,7 @@ class TrafficAnalyticsTest extends TestCase
             'utm_source' => 'google',
             'utm_medium' => 'organic',
             'is_bot' => false,
-            'visited_at' => now(),
+            'created_at' => now(),
         ]);
 
         $response = $this->actingAs($this->adminUser)->get(route('admin.traffic.index'));
