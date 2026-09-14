@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\DiscountController;
+use App\Http\Controllers\Admin\HelpController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\PageController;
@@ -52,6 +53,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('/setari', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/setari', [SettingsController::class, 'update'])->name('settings.update');
+    Route::get('/ghid', HelpController::class)->name('help');
 
     Route::resource('magazin/comenzi', ShopOrderController::class)->only(['index', 'show', 'destroy'])->parameters(['comenzi' => 'shopOrder'])->names('shop-orders');
     Route::patch('/magazin/comenzi/{shopOrder}/status', [ShopOrderController::class, 'updateStatus'])->name('shop-orders.status');

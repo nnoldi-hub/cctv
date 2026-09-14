@@ -88,6 +88,7 @@ const sections = [
         icon: 'shield-check',
         roles: ['admin'],
         items: [
+            { name: 'Ghid utilizare', route: 'admin.help' },
             { name: 'Utilizatori', route: 'admin.users.index' },
             { name: 'Log SMS', route: 'admin.sms-logs' },
             { name: 'Jurnal audit', route: 'admin.audit-logs' },
@@ -267,6 +268,15 @@ const mobileOpen = ref(false);
                 <div class="hidden flex-1 sm:block">
                     <GlobalSearch />
                 </div>
+                <Link
+                    v-if="hasAccess(['admin'])"
+                    :href="route('admin.help')"
+                    class="hidden sm:flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition"
+                    title="Ghid de utilizare si configurare aplicatie"
+                >
+                    <Icon name="help-circle" class="h-4 w-4 text-blue-600" />
+                    <span>Ghid utilizare</span>
+                </Link>
                 <button
                     v-if="page.props.auth.unreadNotifications"
                     type="button"
