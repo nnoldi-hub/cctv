@@ -25,6 +25,9 @@ class Setting extends Model
         'shop_enabled' => '0',
         'shop_free_shipping_threshold' => '500',
         'shop_shipping_cost' => '25',
+        'google_analytics_id' => '',
+        'google_tag_manager_id' => '',
+        'meta_pixel_id' => '',
     ];
 
     public static function get(string $key, ?string $default = null): ?string

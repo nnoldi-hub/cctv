@@ -10,7 +10,7 @@ use App\Http\Controllers\Public\ShopController;
 use App\Http\Controllers\Public\SitemapController;
 use Illuminate\Support\Facades\Route;
 
-Route::name('public.')->group(function () {
+Route::name('public.')->middleware('track.views')->group(function () {
     Route::get('/', HomeController::class)->name('home');
     Route::get('/despre', [PageController::class, 'about'])->name('about');
     Route::get('/servicii', [PageController::class, 'services'])->name('services');

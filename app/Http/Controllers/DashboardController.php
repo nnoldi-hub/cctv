@@ -35,6 +35,7 @@ class DashboardController extends Controller
                 ->selectRaw('COALESCE(SUM(amount - paid_amount), 0) as total')
                 ->value('total');
             $stats['newShopOrders'] = ShopOrder::where('status', 'new')->count();
+            $stats['todayPageViews'] = \App\Models\PageView::human()->whereDate('visited_at', today())->count();
         }
 
         return Inertia::render('Dashboard', ['stats' => $stats]);

@@ -75,6 +75,7 @@ const sections = [
         icon: 'globe',
         roles: ['admin'],
         items: [
+            { name: 'Trafic & Analitica', route: 'admin.traffic.index' },
             { name: 'Pachete site', route: 'admin.site-packages.index' },
             { name: 'Pagini publice', route: 'admin.pages.index' },
             { name: 'Blog', route: 'admin.blog.index' },

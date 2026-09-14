@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ShopOrderController;
 use App\Http\Controllers\Admin\SitePackageController;
 use App\Http\Controllers\Admin\SmsLogController;
 use App\Http\Controllers\Admin\SubscriptionController;
+use App\Http\Controllers\Admin\TrafficController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('/rapoarte', ReportController::class)->name('reports');
     Route::get('/rapoarte/profit', [ReportController::class, 'profit'])->name('reports.profit');
+    Route::get('/trafic', [TrafficController::class, 'index'])->name('traffic.index');
     Route::get('/cheltuieli/export', [ExpenseController::class, 'export'])->name('expenses.export');
     Route::resource('cheltuieli', ExpenseController::class)->except(['show'])->parameters(['cheltuieli' => 'expense'])->names('expenses');
     Route::get('/sms-log', SmsLogController::class)->name('sms-logs');

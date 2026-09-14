@@ -40,6 +40,9 @@ const quickStats = computed(() => {
     if (s.newShopOrders !== undefined) {
         items.push({ label: 'Comenzi magazin noi', value: s.newShopOrders, icon: 'shopping-cart', color: 'text-emerald-600 bg-emerald-50', href: route('admin.shop-orders.index', { status: 'new' }) });
     }
+    if (s.todayPageViews !== undefined) {
+        items.push({ label: 'Vizite azi pe site', value: s.todayPageViews, icon: 'globe', color: 'text-sky-600 bg-sky-50', href: route('admin.traffic.index') });
+    }
 
     return items;
 });
@@ -79,8 +82,8 @@ const modules = computed(() => [
     },
     {
         name: 'Site & Continut',
-        description: 'Pachete, pagini publice si blog',
-        href: route('admin.pages.index'),
+        description: 'Trafic, analitica, pachete, pagini publice si blog',
+        href: route('admin.traffic.index'),
         icon: 'globe',
         color: 'bg-sky-600',
         visible: hasRole('admin'),

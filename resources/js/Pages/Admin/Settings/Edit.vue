@@ -24,6 +24,9 @@ const form = useForm({
     shop_enabled: props.settings.shop_enabled === '1',
     shop_free_shipping_threshold: Number(props.settings.shop_free_shipping_threshold),
     shop_shipping_cost: Number(props.settings.shop_shipping_cost),
+    google_analytics_id: props.settings.google_analytics_id ?? '',
+    google_tag_manager_id: props.settings.google_tag_manager_id ?? '',
+    meta_pixel_id: props.settings.meta_pixel_id ?? '',
 });
 
 function submit() {
@@ -133,6 +136,22 @@ function submit() {
                         <div>
                             <label class="block text-sm font-medium text-slate-700">Cost livrare sub prag (lei)</label>
                             <input v-model.number="form.shop_shipping_cost" type="number" min="0" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" />
+                        </div>
+                        <div class="sm:col-span-2 border-t border-slate-200 pt-5">
+                            <h3 class="text-sm font-semibold text-slate-900">Integrari Marketing & Analitica (Google & Facebook)</h3>
+                            <p class="mt-1 text-xs text-slate-500">Adauga ID-urile de urmarire pentru a activa automat scripturile pe paginile publice.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Google Analytics GA4 ID</label>
+                            <input v-model="form.google_analytics_id" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Ex: G-XXXXXXXXXX" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Google Tag Manager ID</label>
+                            <input v-model="form.google_tag_manager_id" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Ex: GTM-XXXXXXX" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700">Meta (Facebook) Pixel ID</label>
+                            <input v-model="form.meta_pixel_id" type="text" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm" placeholder="Ex: 123456789012345" />
                         </div>
                     </div>
                     <div class="flex justify-end">
